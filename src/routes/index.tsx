@@ -141,7 +141,7 @@ function Index() {
 
         {/* Profile */}
         <section id="profile" className="border-t border-border py-[clamp(3.5rem,9vw,6rem)]">
-          <div className="mx-auto w-full max-w-6xl gap-10 px-[clamp(1rem,4vw,2.5rem)] md:grid-cols-12 md:items-center">
+          <div className="mx-auto grid w-full max-w-6xl gap-10 px-[clamp(1rem,4vw,2.5rem)] md:grid-cols-12 md:items-center">
             <div className="md:col-span-5">
               <img
                 src={eddie2}
@@ -213,7 +213,7 @@ function Index() {
       </footer>
 
       {/* Sticky lead button */}
-      <div className="fixed bottom-5 right-5 z-50 md:bottom-8 md:right-8">
+      <div className="fixed bottom-4 right-4 z-50 sm:bottom-6 sm:right-6 md:bottom-8 md:right-8">
         <LeadDialog>
           <Button size="lg" className="rounded-full px-6 font-semibold shadow-lg">
             <Mail className="size-4" />

@@ -27,7 +27,7 @@ const works: Work[] = [
     category: "Advertising",
     year: "2024",
     poster: work1,
-    span: "lg:col-span-7",
+    span: "sm:col-span-12 lg:col-span-7",
   },
   {
     title: "Launch event & brand experience",
@@ -35,14 +35,14 @@ const works: Work[] = [
     year: "2023",
     poster: work3,
     video: EVENT_VIDEO,
-    span: "lg:col-span-5",
+    span: "sm:col-span-6 lg:col-span-5",
   },
   {
     title: "Identity system & packaging",
     category: "Branding",
     year: "2023",
     poster: work2,
-    span: "lg:col-span-5",
+    span: "sm:col-span-6 lg:col-span-5",
   },
   {
     title: "Content production series",
@@ -50,21 +50,21 @@ const works: Work[] = [
     year: "2025",
     poster: work5,
     video: PRODUCTION_VIDEO,
-    span: "lg:col-span-7",
+    span: "sm:col-span-12 lg:col-span-7",
   },
   {
     title: "National press launch",
     category: "Public Relations",
     year: "2022",
     poster: work4,
-    span: "lg:col-span-6",
+    span: "sm:col-span-6 lg:col-span-6",
   },
   {
     title: "Retail pop-up installation",
     category: "Experiential",
     year: "2024",
     poster: work6,
-    span: "lg:col-span-6",
+    span: "sm:col-span-6 lg:col-span-6",
   },
 ];
 
@@ -73,7 +73,7 @@ export function Works() {
 
   return (
     <>
-      <div className="grid gap-4 lg:grid-cols-12">
+      <div className="grid gap-[clamp(0.75rem,2vw,1.25rem)] sm:grid-cols-12">
         {works.map((work) => (
           <button
             key={work.title}

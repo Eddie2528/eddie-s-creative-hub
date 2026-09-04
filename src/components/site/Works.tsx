@@ -27,7 +27,7 @@ const works: Work[] = [
     category: "Advertising",
     year: "2024",
     poster: work1,
-    span: "sm:col-span-12 lg:col-span-7",
+    span: "sm:col-span-6 lg:col-span-7",
   },
   {
     title: "Launch event & brand experience",
@@ -50,7 +50,7 @@ const works: Work[] = [
     year: "2025",
     poster: work5,
     video: PRODUCTION_VIDEO,
-    span: "sm:col-span-12 lg:col-span-7",
+    span: "sm:col-span-6 lg:col-span-7",
   },
   {
     title: "National press launch",

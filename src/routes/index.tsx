@@ -69,7 +69,7 @@ function Index() {
             <span className="text-primary">business</span> instinct.
           </h1>
 
-          <div className="mt-12 grid gap-10 md:grid-cols-12 md:items-start">
+          <div className="mt-[clamp(2rem,6vw,3rem)] grid gap-[clamp(1.5rem,4vw,2.5rem)] md:grid-cols-12 md:items-start">
             <div className="md:col-span-5">
               <PhotoCarousel
                 photos={[

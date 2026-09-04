@@ -61,7 +61,7 @@ function Index() {
 
       <main id="top">
         {/* Hero */}
-        <section className="mx-auto max-w-6xl px-5 pb-20 pt-14 md:pt-24">
+        <section className="mx-auto w-full max-w-6xl px-[clamp(1rem,4vw,2.5rem)] pb-[clamp(3.5rem,9vw,6rem)] pt-[clamp(2.5rem,7vw,6rem)]">
           <p className="hairline">Bangkok — Advertising, Branding, PR, Events, BD</p>
           <h1 className="display mt-6 text-[clamp(2.75rem,11vw,8rem)]">
             Creative mind,
@@ -69,7 +69,7 @@ function Index() {
             <span className="text-primary">business</span> instinct.
           </h1>
 
-          <div className="mt-12 grid gap-10 md:grid-cols-12 md:items-start">
+          <div className="mt-[clamp(2rem,6vw,3rem)] grid gap-[clamp(1.5rem,4vw,2.5rem)] md:grid-cols-12 md:items-start">
             <div className="md:col-span-5">
               <PhotoCarousel
                 photos={[
@@ -110,24 +110,24 @@ function Index() {
         </section>
 
         {/* Experience */}
-        <section id="experience" className="border-t border-border py-20">
-          <div className="mx-auto max-w-6xl px-5">
+        <section id="experience" className="border-t border-border py-[clamp(3.5rem,9vw,6rem)]">
+          <div className="mx-auto w-full max-w-6xl px-[clamp(1rem,4vw,2.5rem)]">
             <p className="hairline">01 — Experience</p>
-            <h2 className="display mt-4 text-[clamp(2rem,6vw,4rem)]">Brands & teams I&rsquo;ve worked with</h2>
+            <h2 className="display mt-4 text-[clamp(1.9rem,6vw,4rem)]">Brands & teams I&rsquo;ve worked with</h2>
           </div>
           <div className="mt-10">
             <ExperienceMarquee />
           </div>
-          <div className="mx-auto mt-14 max-w-6xl px-5">
+          <div className="mx-auto mt-14 w-full max-w-6xl px-[clamp(1rem,4vw,2.5rem)]">
             <RoleList />
           </div>
         </section>
 
         {/* Works */}
-        <section id="works" className="border-t border-border py-20">
-          <div className="mx-auto max-w-6xl px-5">
+        <section id="works" className="border-t border-border py-[clamp(3.5rem,9vw,6rem)]">
+          <div className="mx-auto w-full max-w-6xl px-[clamp(1rem,4vw,2.5rem)]">
             <p className="hairline">02 — Selected works</p>
-            <h2 className="display mt-4 text-[clamp(2rem,6vw,4rem)]">
+            <h2 className="display mt-4 text-[clamp(1.9rem,6vw,4rem)]">
               Campaigns, brands & experiences
             </h2>
             <p className="mt-4 max-w-xl text-muted-foreground">
@@ -140,8 +140,8 @@ function Index() {
         </section>
 
         {/* Profile */}
-        <section id="profile" className="border-t border-border py-20">
-          <div className="mx-auto grid max-w-6xl gap-10 px-5 md:grid-cols-12 md:items-center">
+        <section id="profile" className="border-t border-border py-[clamp(3.5rem,9vw,6rem)]">
+          <div className="mx-auto grid w-full max-w-6xl gap-10 px-[clamp(1rem,4vw,2.5rem)] md:grid-cols-12 md:items-center">
             <div className="md:col-span-5">
               <img
                 src={eddie2}
@@ -182,8 +182,8 @@ function Index() {
         </section>
 
         {/* CTA */}
-        <section className="border-t border-border py-24">
-          <div className="mx-auto max-w-6xl px-5 text-center">
+        <section className="border-t border-border py-[clamp(4rem,11vw,7rem)]">
+          <div className="mx-auto w-full max-w-6xl px-[clamp(1rem,4vw,2.5rem)] text-center">
             <h2 className="display text-[clamp(2.25rem,9vw,6rem)]">
               Let&rsquo;s make something<span className="text-primary">.</span>
             </h2>
@@ -213,7 +213,7 @@ function Index() {
       </footer>
 
       {/* Sticky lead button */}
-      <div className="fixed bottom-5 right-5 z-50 md:bottom-8 md:right-8">
+      <div className="fixed bottom-4 right-4 z-50 sm:bottom-6 sm:right-6 md:bottom-8 md:right-8">
         <LeadDialog>
           <Button size="lg" className="rounded-full px-6 font-semibold shadow-lg">
             <Mail className="size-4" />

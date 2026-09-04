@@ -13,8 +13,8 @@ const companies = [
 
 function LogoTile({ name, mark }: { name: string; mark: string }) {
   return (
-    <div className="mx-2 flex w-44 shrink-0 items-center gap-3 rounded-sm border border-border bg-card px-5 py-4 transition-colors hover:border-primary">
-      <span className="display flex size-9 items-center justify-center rounded-full bg-primary text-sm text-primary-foreground">
+    <div className="mx-2 flex w-[clamp(9.5rem,28vw,12rem)] shrink-0 items-center gap-3 rounded-sm border min-w-0 border-border bg-card px-5 py-4 transition-colors hover:border-primary">
+      <span className="display flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-sm text-primary-foreground">
         {mark}
       </span>
       <span className="truncate text-sm font-medium tracking-wide">{name}</span>

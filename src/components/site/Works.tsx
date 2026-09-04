@@ -120,7 +120,7 @@ export function Works() {
       </div>
 
       <Dialog open={!!active} onOpenChange={(open) => !open && setActive(null)}>
-        <DialogContent className="max-w-4xl border-border bg-card p-2 sm:p-3">
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-4xl border-border bg-card p-2 sm:p-3">
           <DialogTitle className="sr-only">{active?.title ?? "Work"}</DialogTitle>
           {active?.video ? (
             <video

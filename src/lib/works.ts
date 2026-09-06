@@ -16,6 +16,8 @@ export type Work = {
   poster: string | null;
   sort: number;
   visible: boolean;
+  assetName: string | null;
+  posterName: string | null;
 };
 
 export type Campaign = { name: string; works: Work[] };
@@ -26,6 +28,9 @@ type WorkRow = {
   category: string;
   sort: number;
   visible: boolean;
+  // Null means "whatever the catalogue names".
+  asset: string | null;
+  poster: string | null;
 };
 
 type WorksTable = {
@@ -56,7 +61,7 @@ function resolve(asset: string): string {
 async function merged(): Promise<Work[]> {
   let rows: WorkRow[] = [];
   try {
-    const { data, error } = await (await worksTable()).select("id,title,category,sort,visible");
+    const { data, error } = await (await worksTable()).select("id,title,category,sort,visible,asset,poster");
     if (error) throw new Error(error.message);
     rows = data ?? [];
   } catch (cause) {
@@ -73,8 +78,15 @@ async function merged(): Promise<Work[]> {
       title: row?.title ?? entry.title,
       category: row?.category ?? entry.category,
       kind: entry.kind,
-      asset: resolve(entry.asset),
-      poster: entry.poster ? resolve(entry.poster) : null,
+      asset: resolve(row?.asset || entry.asset),
+      poster: (() => {
+        const poster = row?.poster || entry.poster;
+        return poster ? resolve(poster) : null;
+      })(),
+      // The bare filenames, so the back-office can show what's selected
+      // without having to parse a URL back apart.
+      assetName: row?.asset ?? null,
+      posterName: row?.poster ?? null,
       sort: row?.sort ?? index,
       visible: row?.visible ?? true,
     };
@@ -125,6 +137,8 @@ export const adminSaveWorks = createServerFn({ method: "POST" })
             category: z.string().min(1).max(80),
             sort: z.number().int().min(0).max(9999),
             visible: z.boolean(),
+            asset: z.string().max(200).nullable(),
+            poster: z.string().max(200).nullable(),
           }),
         )
         .max(200),

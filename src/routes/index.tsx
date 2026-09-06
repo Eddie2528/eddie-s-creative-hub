@@ -139,7 +139,7 @@ function Index() {
             <h2 className="display mt-4 text-[clamp(1.9rem,6vw,4rem)]">{content["works.heading"]}</h2>
             <p className="mt-4 max-w-xl text-muted-foreground">{content["works.note"]}</p>
             <div className="mt-10">
-              <Works campaigns={campaigns} images={images} />
+              <Works campaigns={campaigns} />
             </div>
           </div>
         </section>

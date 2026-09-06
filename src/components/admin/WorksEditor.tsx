@@ -4,6 +4,7 @@ import { ArrowDown, ArrowUp, Eye, EyeOff, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { adminListCampaigns, adminSaveWorks, type Campaign, type Work } from "@/lib/works";
+import { adminListAssets, type Asset } from "@/lib/admin-assets";
 
 // Mirrors the bundled artwork in the public Works component, so pieces that
 // were never uploaded still show a thumbnail here.
@@ -22,11 +23,19 @@ export function WorksEditor() {
   const [dirty, setDirty] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [justSaved, setJustSaved] = useState(false);
+  const [videos, setVideos] = useState<Asset[]>([]);
+  const [images, setImages] = useState<Asset[]>([]);
 
   useEffect(() => {
     void (async () => {
       try {
-        setCampaigns(await adminListCampaigns());
+        const [list, assets] = await Promise.all([
+          adminListCampaigns(),
+          adminListAssets().catch(() => [] as Asset[]),
+        ]);
+        setCampaigns(list);
+        setVideos(assets.filter((a) => (a.contentType ?? "").startsWith("video/")));
+        setImages(assets.filter((a) => (a.contentType ?? "").startsWith("image/")));
       } catch (cause) {
         console.error("Loading works failed", cause);
         setError("Couldn't load the works list.");
@@ -72,6 +81,8 @@ export function WorksEditor() {
               category: work.category,
               sort: i,
               visible: work.visible,
+              asset: work.assetName,
+              poster: work.posterName,
             })),
           ),
         },
@@ -138,6 +149,49 @@ export function WorksEditor() {
                       )
                     }
                   />
+                </div>
+
+                <div className="flex w-full gap-2 sm:w-auto sm:min-w-72">
+                  <select
+                    aria-label={`${work.id} file`}
+                    value={work.assetName ?? ""}
+                    onChange={(e) =>
+                      update(campaign.name, (works) =>
+                        works.map((w) =>
+                          w.id === work.id ? { ...w, assetName: e.target.value || null } : w,
+                        ),
+                      )
+                    }
+                    className="h-9 min-w-0 flex-1 rounded-md border border-input bg-background px-2 text-xs"
+                  >
+                    <option value="">Default file</option>
+                    {(work.kind === "video" ? videos : images).map((file) => (
+                      <option key={file.name} value={file.name}>
+                        {file.name}
+                      </option>
+                    ))}
+                  </select>
+                  {work.kind === "video" ? (
+                    <select
+                      aria-label={`${work.id} poster`}
+                      value={work.posterName ?? ""}
+                      onChange={(e) =>
+                        update(campaign.name, (works) =>
+                          works.map((w) =>
+                            w.id === work.id ? { ...w, posterName: e.target.value || null } : w,
+                          ),
+                        )
+                      }
+                      className="h-9 min-w-0 flex-1 rounded-md border border-input bg-background px-2 text-xs"
+                    >
+                      <option value="">Default poster</option>
+                      {images.map((file) => (
+                        <option key={file.name} value={file.name}>
+                          {file.name}
+                        </option>
+                      ))}
+                    </select>
+                  ) : null}
                 </div>
 
                 <div className="flex gap-1">

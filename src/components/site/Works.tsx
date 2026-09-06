@@ -27,24 +27,16 @@ const BUNDLED: Record<string, string> = {
   "moong-pattana-book": moongPattanaBook,
 };
 
-function src(value: string, override?: string): string {
-  if (override) return override;
+function src(value: string): string {
   return value.startsWith("bundled:") ? (BUNDLED[value.slice(8)] ?? "") : value;
 }
 
 // A video's still comes from its poster; a photo is its own still.
-function still(work: Work, overrides: Record<string, string>): string {
-  const override = overrides[`works.${work.id}`];
-  return work.kind === "video" ? src(work.poster ?? "", override) : src(work.asset, override);
+function still(work: Work): string {
+  return work.kind === "video" ? src(work.poster ?? "") : src(work.asset);
 }
 
-export function Works({
-  campaigns = [],
-  images = {},
-}: {
-  campaigns?: Campaign[];
-  images?: Record<string, string>;
-}) {
+export function Works({ campaigns = [] }: { campaigns?: Campaign[] }) {
   const [active, setActive] = useState<Work | null>(null);
 
   return (
@@ -64,7 +56,7 @@ export function Works({
                   className="group relative aspect-[4/3] overflow-hidden rounded-sm bg-secondary text-left"
                 >
                   <img
-                    src={still(work, images)}
+                    src={still(work)}
                     alt={work.title}
                     loading="lazy"
                     className="absolute inset-0 size-full object-cover transition-transform duration-700 group-hover:scale-105"
@@ -94,7 +86,7 @@ export function Works({
           {active?.kind === "video" ? (
             <video
               src={src(active.asset)}
-              poster={still(active, images)}
+              poster={still(active)}
               controls
               autoPlay
               playsInline
@@ -103,7 +95,7 @@ export function Works({
           ) : (
             active && (
               <img
-                src={still(active, images)}
+                src={still(active)}
                 alt={active.title}
                 className="mx-auto max-h-[75vh] w-auto max-w-full rounded-sm object-contain"
               />

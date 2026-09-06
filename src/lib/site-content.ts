@@ -71,9 +71,7 @@ export const CONTENT_FIELDS: ContentField[] = [
   { key: "role7.company", section: "Experience", label: "Role 7 — company", value: "CenterPoint Entertainment" },
 
 
-  { key: "works.kicker", section: "Works", label: "Kicker line", value: "02 — Selected works" },
   { key: "works.heading", section: "Works", label: "Heading", value: "Campaigns, brands & experiences" },
-  { key: "works.note", section: "Works", label: "Note under heading", value: "Hover a film to preview, click any piece to open it full size." },
 
   { key: "profile.kicker", section: "Profile", label: "Kicker line", value: "03 — Personal profile" },
   { key: "profile.heading", section: "Profile", label: "Heading", value: "Half maker, half dealmaker" },
@@ -129,15 +127,10 @@ export const IMAGE_FIELDS: ImageField[] = [
   { key: "logo.cenergy-innovation", section: "Logos", label: "Cenergy Innovation" },
   { key: "logo.centerpoint-entertainment", section: "Logos", label: "CenterPoint Entertainment" },
 
-  { key: "works.the-mall-thematic", section: "Works", label: "The Mall — Thematic" },
   { key: "works.moong-pattana-book", section: "Works", label: "Moong Pattana — Book for All Moms" },
-  { key: "works.the-mall-food", section: "Works", label: "The Mall — Food zone" },
   { key: "works.the-mall-pet", section: "Works", label: "The Mall — Pet zone" },
-  { key: "works.the-mall-shopping", section: "Works", label: "The Mall — Shopping zone" },
   { key: "works.the-mall-harbourland", section: "Works", label: "The Mall — Harbourland zone" },
-  { key: "works.em-district-kv", section: "Works", label: "EM District — Thematic" },
   { key: "works.ok-thin-kv", section: "Works", label: "OK Thin — Biscuit KV" },
-  { key: "works.ok-thin-bus", section: "Works", label: "OK Thin — Bus campaign" },
 ];
 
 // Documents the back-office can point at, same idea as IMAGE_FIELDS: the value

@@ -137,16 +137,17 @@ Constraints:
 - **The server does have `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`** in
   `process.env`, even though the client env is missing. A live submission
   reached the database through the server function, which is what proves it.
+- **Email needs a paid plan.** `Cloud → Emails` is a paywall with no sender
+  domain to choose, and the API refuses every send without a registered one
+  (400 `missing_parameter`, then 403 `no_matching_sender`). `notifyNewLead`
+  skips cleanly until `LEAD_NOTIFY_DOMAIN` is set, so no code changes when a
+  domain is eventually verified.
 - Publishing and pushing both cost zero credits. Prompts cost ~1 each, and the
   security scanner's "Try to fix all" is free — but it rewrites policies its own
   way, so for anything touching lead data, write the SQL and run it yourself.
 
 ## 7. Open questions
 
-- Which sender domain does Lovable accept for this project? `notifyNewLead`
-  guesses `noreply@lovable.app` and can be pointed elsewhere with
-  `LEAD_NOTIFY_DOMAIN` / `LEAD_NOTIFY_TO`; `Cloud → Logs` shows what the send
-  actually returned.
 - Which auth method for the back-office — magic link or password?
 
 ## 8. Next steps
@@ -155,6 +156,7 @@ Constraints:
 2. ~~Wire the form to save~~ — done, via the server function.
 3. ~~Verify a real submission lands in the table~~ — done on the live site.
 4. Apply `0002_lock_down_leads.sql` via `Cloud → SQL editor`.
-5. ~~Add email notification~~ — done; verify one actually arrives.
+5. ~~Add email notification~~ — written, but dormant: sending needs a paid
+   plan (see §6). Set `LEAD_NOTIFY_DOMAIN` to switch it on.
 6. Build `/admin/leads`, authorizing Eddie explicitly (see §3).
 7. Replace placeholder logos, work samples, and the CV file.

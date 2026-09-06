@@ -87,6 +87,18 @@ export const CONTENT_FIELDS: ContentField[] = [
   { key: "footer.location", section: "Footer", label: "Location", value: "Bangkok, Thailand" },
 ];
 
+// Pictures the back-office can swap. The value stored against each key is a
+// filename in the site-assets bucket; empty means "still the photo shipped
+// with the code", so an empty table renders the site exactly as built.
+export type ImageField = { key: string; section: string; label: string };
+
+export const IMAGE_FIELDS: ImageField[] = [
+  { key: "hero.photo1", section: "Hero", label: "Carousel photo 1" },
+  { key: "hero.photo2", section: "Hero", label: "Carousel photo 2" },
+  { key: "hero.photo3", section: "Hero", label: "Carousel photo 3" },
+  { key: "profile.photo", section: "Profile", label: "Profile photo" },
+];
+
 export type SiteContent = Record<string, string>;
 
 export const CONTENT_DEFAULTS: SiteContent = Object.fromEntries(
@@ -108,6 +120,8 @@ export function mergeContent(stored: SiteContent): SiteContent {
 
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+
+import { SITE_BUCKET } from "./site-assets";
 
 type ContentRow = { key: string; value: string };
 
@@ -157,7 +171,10 @@ export const adminSaveContent = createServerFn({ method: "POST" })
 
     // Only keys the site actually renders — a stray key would be dead weight
     // the page never reads.
-    const known = new Set(CONTENT_FIELDS.map((field) => field.key));
+    const known = new Set([
+      ...CONTENT_FIELDS.map((field) => field.key),
+      ...IMAGE_FIELDS.map((field) => field.key),
+    ]);
     const rows = data.entries.filter((entry) => known.has(entry.key));
     if (rows.length === 0) return { ok: true };
 
@@ -165,3 +182,29 @@ export const adminSaveContent = createServerFn({ method: "POST" })
     if (error) throw new Error(`Failed to save content: ${error.message}`);
     return { ok: true };
   });
+
+// Image keys resolve to full URLs here rather than in the page: the browser has
+// no Supabase env in production, so it can't build a storage URL itself.
+export const getSiteImages = createServerFn({ method: "GET" }).handler(
+  async (): Promise<Record<string, string>> => {
+    try {
+      const { data, error } = await (await contentTable()).select("key,value");
+      if (error) throw new Error(error.message);
+
+      const base = (process.env["SUPABASE_URL"] ?? "").replace(/\/$/, "");
+      if (!base) return {};
+
+      const wanted = new Set(IMAGE_FIELDS.map((field) => field.key));
+      const out: Record<string, string> = {};
+      for (const row of data ?? []) {
+        if (wanted.has(row.key) && row.value) {
+          out[row.key] = `${base}/storage/v1/object/public/${SITE_BUCKET}/${row.value}`;
+        }
+      }
+      return out;
+    } catch (cause) {
+      console.error("[content] Using built-in photos; image load failed", cause);
+      return {};
+    }
+  },
+);

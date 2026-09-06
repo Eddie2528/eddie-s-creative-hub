@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { getCvUrl } from "@/lib/site-assets";
-import { getSiteContent } from "@/lib/site-content";
+import { getSiteContent, getSiteImages } from "@/lib/site-content";
 import { ArrowUpRight, Download, Mail } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -36,12 +36,15 @@ export const Route = createFileRoute("/")({
   loader: async () => ({
     cvUrl: await getCvUrl(),
     content: await getSiteContent(),
+    images: await getSiteImages(),
   }),
   component: Index,
 });
 
 function Index() {
-  const { cvUrl: CV_URL, content } = Route.useLoaderData();
+  const { cvUrl: CV_URL, content, images } = Route.useLoaderData();
+  // An uploaded photo wins; otherwise the one bundled with the build.
+  const photo = (key: string, fallback: string) => images[key] ?? fallback;
 
   return (
     <div className="grain min-h-screen">
@@ -85,9 +88,9 @@ function Index() {
             <div className="md:col-span-5">
               <PhotoCarousel
                 photos={[
-                  { src: eddie1, alt: "Portrait of Eddie Nakharin" },
-                  { src: eddie2, alt: "Eddie presenting brand strategy to a team" },
-                  { src: eddie3, alt: "Eddie on a rooftop in Bangkok at dusk" },
+                  { src: photo("hero.photo1", eddie1), alt: "Portrait of Eddie Nakharin" },
+                  { src: photo("hero.photo2", eddie2), alt: "Eddie presenting brand strategy to a team" },
+                  { src: photo("hero.photo3", eddie3), alt: "Eddie on a rooftop in Bangkok at dusk" },
                 ]}
               />
             </div>
@@ -144,7 +147,7 @@ function Index() {
           <div className="mx-auto grid w-full max-w-6xl gap-10 px-[clamp(1rem,4vw,2.5rem)] md:grid-cols-12 md:items-center">
             <div className="md:col-span-5">
               <img
-                src={eddie2}
+                src={photo("profile.photo", eddie2)}
                 alt="Eddie Nakharin leading a workshop"
                 width={1024}
                 height={1280}

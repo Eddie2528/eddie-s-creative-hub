@@ -111,7 +111,7 @@ it was, so the CMS can never take the page down.
 | Phase | Scope |
 | --- | --- |
 | 1 ✅ | Text: headings, kickers, intro copy, stats, buttons, footer, page meta |
-| 2 ✅ | Files tab: upload, replace and delete anything in Cloud Storage |
+| 2 ✅ | Files tab for Cloud Storage, and a Photos picker that swaps the hero carousel and profile photo |
 | 3 | Lists: add/remove/reorder companies, roles and works |
 
 Adding an editable field is one entry in `CONTENT_FIELDS`; the admin form

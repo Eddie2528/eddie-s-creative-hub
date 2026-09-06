@@ -122,7 +122,9 @@ export function WorksEditor() {
       setTimeout(() => setJustSaved(false), 2500);
     } catch (cause) {
       console.error("Saving works failed", cause);
-      setError("Couldn't save — try again.");
+      // Pass the server's own words through: "relation does not exist" tells
+      // you a migration hasn't been run, which "try again" never would.
+      setError(cause instanceof Error ? cause.message : "Couldn't save — try again.");
     } finally {
       setSaving(false);
     }

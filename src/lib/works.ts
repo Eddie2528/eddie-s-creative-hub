@@ -196,14 +196,20 @@ export const adminSaveWorks = createServerFn({ method: "POST" })
     if (rows.length === 0) return { ok: true };
 
     const { error } = await (await worksTable()).upsert(rows, { onConflict: "id" });
-    if (error) throw new Error(`Failed to save works: ${error.message}`);
+    if (error) throw new Error(
+        `Couldn’t save works — ${error.message}. A missing site_works table or column means ` +
+          `migrations 0004 and 0005 still need running in the Cloud SQL editor.`,
+      );
 
     if (data.campaignOrder) {
       const { error: orderError } = await (await contentRows()).upsert(
         [{ key: ORDER_KEY, value: JSON.stringify(data.campaignOrder) }],
         { onConflict: "key" },
       );
-      if (orderError) throw new Error(`Failed to save campaign order: ${orderError.message}`);
+      if (orderError) throw new Error(
+          `Couldn’t save the campaign order — ${orderError.message}. A missing site_content ` +
+            `table means migration 0003 still needs running in the Cloud SQL editor.`,
+        );
     }
     return { ok: true };
   });

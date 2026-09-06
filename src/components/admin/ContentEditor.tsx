@@ -78,7 +78,7 @@ export function ContentEditor() {
       setTimeout(() => setJustSaved(false), 2500);
     } catch (cause) {
       console.error("Saving content failed", cause);
-      setError("Couldn't save — try again.");
+      setError(cause instanceof Error ? cause.message : "Couldn't save — try again.");
     } finally {
       setSaving(false);
     }

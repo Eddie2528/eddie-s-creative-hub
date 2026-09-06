@@ -1,17 +1,56 @@
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useRef, useState, type FormEvent, type ReactNode } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+
+// Bots fill every field they find, including ones a person never sees.
+const HONEYPOT = "company_website";
+const MIN_FILL_MS = 2000;
 
 export function LeadDialog({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const [sent, setSent] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const openedAt = useRef(0);
 
-  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    const data = new FormData(e.currentTarget);
+
+    if (data.get(HONEYPOT)) {
+      setSent(true);
+      return;
+    }
+    if (Date.now() - openedAt.current < MIN_FILL_MS) {
+      setError("That was quick — take a moment and submit again.");
+      return;
+    }
+
+    setSubmitting(true);
+    setError(null);
+
+    const message = String(data.get("message") ?? "").trim();
+    const { error: insertError } = await supabase.from("leads").insert({
+      name: String(data.get("name") ?? "").trim(),
+      email: String(data.get("email") ?? "").trim(),
+      phone: String(data.get("phone") ?? "").trim(),
+      message: message || null,
+      source: typeof window === "undefined" ? null : window.location.pathname,
+    });
+
+    setSubmitting(false);
+
+    if (insertError) {
+      // The form is left as-is so nothing typed is lost.
+      setError("Couldn't send that — please try again, or email me directly.");
+      return;
+    }
+
     setSent(true);
   }
 
@@ -20,7 +59,14 @@ export function LeadDialog({ children }: { children: ReactNode }) {
       open={open}
       onOpenChange={(next) => {
         setOpen(next);
-        if (!next) setTimeout(() => setSent(false), 250);
+        if (next) {
+          openedAt.current = Date.now();
+        } else {
+          setTimeout(() => {
+            setSent(false);
+            setError(null);
+          }, 250);
+        }
       }}
     >
       <DialogTrigger asChild>{children}</DialogTrigger>
@@ -61,8 +107,19 @@ export function LeadDialog({ children }: { children: ReactNode }) {
               <Label htmlFor="lead-message">How can I help?</Label>
               <Textarea id="lead-message" name="message" rows={4} placeholder="Tell me about your project" />
             </div>
-            <Button type="submit" size="lg" className="w-full font-semibold">
-              Submit
+
+            <div aria-hidden className="absolute left-[-9999px] top-0 size-0 overflow-hidden">
+              <Input name={HONEYPOT} tabIndex={-1} autoComplete="off" />
+            </div>
+
+            {error ? (
+              <p role="alert" className="text-sm text-destructive">
+                {error}
+              </p>
+            ) : null}
+
+            <Button type="submit" size="lg" disabled={submitting} className="w-full font-semibold">
+              {submitting ? "Sending…" : "Submit"}
             </Button>
           </form>
         )}

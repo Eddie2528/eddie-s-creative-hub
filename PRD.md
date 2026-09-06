@@ -67,6 +67,19 @@ The site is public and unauthenticated, so RLS must be explicit:
 - On failure, show an error and keep the user's input — never silently drop a lead.
 - Basic anti-spam: honeypot field, and reject submissions faster than ~2s.
 
+### Why the write goes through the server
+
+`src/lib/submit-lead.ts` is a `createServerFn` RPC; the browser never talks to
+Supabase directly. The first attempt did insert from the browser and worked in
+preview but not on the published site: `VITE_SUPABASE_URL` and
+`VITE_SUPABASE_PUBLISHABLE_KEY` reach the preview build but not the production
+one, so `createSupabaseClient()` threw and every lead was lost. Going through
+the server uses `process.env` instead, and keeps credentials and the spam
+checks out of reach of the browser.
+
+Note `**/server/**` is import-protected by TanStack Start — a server function
+imported by client code must live elsewhere, hence `src/lib/`.
+
 ## 4. Feature: back-office (priority 2)
 
 A private page to read and work the leads. Build this in Claude Code, not
@@ -99,18 +112,32 @@ Constraints:
 - Never commit `.env`; the repo is public.
 - Pushing to `main` syncs straight to Lovable, so keep `main` working.
 
-## 6. Open questions
+## 6. What we learned
 
-- Does Lovable apply migrations pushed as `supabase/migrations/*.sql`, or must
-  tables be created through a Lovable prompt? (Untested — see §7.)
+- **Lovable does not apply `supabase/migrations/*.sql` on push.** Pushing the
+  file only syncs it. Either prompt Lovable to run it, or paste it into
+  `Cloud → SQL editor` — the SQL editor costs no credits and is the cheaper
+  path for anything schema-related from here on.
+- **Publishing is not automatic.** A push updates the Lovable preview only; the
+  live site keeps serving the previous build until someone hits Publish.
+  Preview and production are separate builds with different bundle hashes.
+- **`VITE_*` env vars don't reach the production build** (see §3), which is why
+  writes go through the server.
+- Publishing and pushing both cost zero credits. Prompts cost ~1 each.
+
+## 7. Open questions
+
+- Are `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` present in the deployed
+  server's `process.env`? If not, the server function fails the same way the
+  browser client did, and Lovable has to wire them in.
 - Email-on-new-lead: Lovable Cloud `Emails`, or an edge function?
 - Which auth method for the back-office — magic link or password?
 
-## 7. Next steps
+## 8. Next steps
 
-1. Apply the `leads` table (`supabase/migrations/0001_leads.sql`).
-2. Wire `LeadDialog` to insert into it.
-3. Verify a real submission lands in the table.
+1. ~~Apply the `leads` table~~ — done, `supabase/migrations/0001_leads.sql`.
+2. ~~Wire the form to save~~ — done, via the server function.
+3. Publish, then verify a real submission lands in the table.
 4. Add email notification.
 5. Build `/admin/leads`.
 6. Replace placeholder logos, work samples, and the CV file.

@@ -5,11 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-
-// Bots fill every field they find, including ones a person never sees.
-const HONEYPOT = "company_website";
-const MIN_FILL_MS = 2000;
+import { HONEYPOT, submitLead } from "@/lib/submit-lead";
 
 export function LeadDialog({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -22,33 +18,30 @@ export function LeadDialog({ children }: { children: ReactNode }) {
     e.preventDefault();
     const data = new FormData(e.currentTarget);
 
-    if (data.get(HONEYPOT)) {
-      setSent(true);
-      return;
-    }
-    if (Date.now() - openedAt.current < MIN_FILL_MS) {
-      setError("That was quick — take a moment and submit again.");
-      return;
-    }
-
     setSubmitting(true);
     setError(null);
 
-    const message = String(data.get("message") ?? "").trim();
-    const lead = {
-      name: String(data.get("name") ?? "").trim(),
-      email: String(data.get("email") ?? "").trim(),
-      phone: String(data.get("phone") ?? "").trim(),
-      message: message || null,
-      source: typeof window === "undefined" ? null : window.location.pathname,
-    };
-
     try {
-      // Anything here can throw, not just reject: creating the client throws
-      // outright when its env vars are missing. Catch it, or the button sits
+      // Anything here can throw, not just reject — a network failure or a
+      // server misconfiguration both land here. Catch it, or the button sits
       // on "Sending…" forever and the lead is lost with no way to retry.
-      const { error: insertError } = await supabase.from("leads").insert(lead);
-      if (insertError) throw insertError;
+      const result = await submitLead({
+        data: {
+          name: String(data.get("name") ?? "").trim(),
+          email: String(data.get("email") ?? "").trim(),
+          phone: String(data.get("phone") ?? "").trim(),
+          message: String(data.get("message") ?? "").trim(),
+          source: window.location.pathname,
+          [HONEYPOT]: String(data.get(HONEYPOT) ?? ""),
+          elapsedMs: Date.now() - openedAt.current,
+        },
+      });
+
+      if (!result.ok) {
+        setError("That was quick — take a moment and submit again.");
+        return;
+      }
+
       setSent(true);
     } catch (cause) {
       console.error("Lead submission failed", cause);

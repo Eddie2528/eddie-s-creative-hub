@@ -32,15 +32,28 @@ export const submitLead = createServerFn({ method: "POST" })
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const { error } = await supabaseAdmin.from("leads").insert({
+    const lead = {
       name: data.name,
       email: data.email,
       phone: data.phone,
       message: data.message || null,
       source: data.source || null,
-    });
+    };
+
+    const { data: saved, error } = await supabaseAdmin
+      .from("leads")
+      .insert(lead)
+      .select("id")
+      .single();
 
     if (error) throw new Error(`Failed to save lead: ${error.message}`);
+
+    // After the insert, and awaited so the notification isn't cut short when
+    // the serverless invocation ends. notifyNewLead swallows its own failures:
+    // the lead is saved either way, and asking a visitor to submit again
+    // because our mail provider is down would be the worse outcome.
+    const { notifyNewLead } = await import("./notify-lead");
+    await notifyNewLead({ id: saved.id, ...lead });
 
     return { ok: true };
   });

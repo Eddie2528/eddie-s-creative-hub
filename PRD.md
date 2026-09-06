@@ -26,7 +26,6 @@ events, business development) that converts visitors into inbound leads.
 ### Known gaps
 | Gap | Impact | Owner |
 | --- | --- | --- |
-| No notification on submit | Eddie doesn't know a lead arrived | §3 |
 | No way to read leads back | Data would be write-only | §4 |
 | Company names, roles, CV file are placeholders | Site shows fake credentials | Eddie supplies real assets |
 
@@ -144,7 +143,10 @@ Constraints:
 
 ## 7. Open questions
 
-- Email-on-new-lead: Lovable Cloud `Emails`, or an edge function?
+- Which sender domain does Lovable accept for this project? `notifyNewLead`
+  guesses `noreply@lovable.app` and can be pointed elsewhere with
+  `LEAD_NOTIFY_DOMAIN` / `LEAD_NOTIFY_TO`; `Cloud → Logs` shows what the send
+  actually returned.
 - Which auth method for the back-office — magic link or password?
 
 ## 8. Next steps
@@ -153,6 +155,6 @@ Constraints:
 2. ~~Wire the form to save~~ — done, via the server function.
 3. ~~Verify a real submission lands in the table~~ — done on the live site.
 4. Apply `0002_lock_down_leads.sql` via `Cloud → SQL editor`.
-5. Add email notification.
+5. ~~Add email notification~~ — done; verify one actually arrives.
 6. Build `/admin/leads`, authorizing Eddie explicitly (see §3).
 7. Replace placeholder logos, work samples, and the CV file.

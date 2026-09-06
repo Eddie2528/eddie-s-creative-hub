@@ -5,15 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { adminListCampaigns, adminSaveWorks, type Campaign, type Work } from "@/lib/works";
 import { adminListAssets, type Asset } from "@/lib/admin-assets";
+import { resolveBundled } from "@/lib/bundled-works";
 
-// Mirrors the bundled artwork in the public Works component, so pieces that
-// were never uploaded still show a thumbnail here.
-const BUNDLED_PREFIX = "bundled:";
-
+// The same still the site shows, so reordering is done by looking at the work
+// rather than by reading its title.
 function thumb(work: Work): string | null {
-  const value = work.kind === "video" ? work.poster : work.asset;
-  if (!value || value.startsWith(BUNDLED_PREFIX)) return null;
-  return value;
+  return resolveBundled(work.kind === "video" ? work.poster : work.asset);
 }
 
 export function WorksEditor() {

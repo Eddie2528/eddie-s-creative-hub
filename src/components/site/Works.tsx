@@ -4,31 +4,10 @@ import { Play } from "lucide-react";
 
 import type { Campaign, Work } from "@/lib/works";
 
-import theMallThematic from "@/assets/works/the-mall-thematic.jpg";
-import theMallFood from "@/assets/works/the-mall-food.jpg";
-import theMallPet from "@/assets/works/the-mall-pet.jpg";
-import theMallShopping from "@/assets/works/the-mall-shopping.jpg";
-import theMallHarbourland from "@/assets/works/the-mall-harbourland.jpg";
-import emDistrictKv from "@/assets/works/em-district-kv.jpg";
-import okThinKv from "@/assets/works/ok-thin-kv.jpg";
-import okThinBus from "@/assets/works/ok-thin-bus.jpg";
-import moongPattanaBook from "@/assets/works/moong-pattana-book.jpg";
-
-// Artwork compiled into the build, for pieces that were never uploaded.
-const BUNDLED: Record<string, string> = {
-  "the-mall-thematic": theMallThematic,
-  "the-mall-food": theMallFood,
-  "the-mall-pet": theMallPet,
-  "the-mall-shopping": theMallShopping,
-  "the-mall-harbourland": theMallHarbourland,
-  "em-district-kv": emDistrictKv,
-  "ok-thin-kv": okThinKv,
-  "ok-thin-bus": okThinBus,
-  "moong-pattana-book": moongPattanaBook,
-};
+import { resolveBundled } from "@/lib/bundled-works";
 
 function src(value: string): string {
-  return value.startsWith("bundled:") ? (BUNDLED[value.slice(8)] ?? "") : value;
+  return resolveBundled(value) ?? "";
 }
 
 // A video's still comes from its poster; a photo is its own still.

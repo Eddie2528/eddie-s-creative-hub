@@ -2,69 +2,101 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Play } from "lucide-react";
 
-import work1 from "@/assets/work-1.jpg";
-import work2 from "@/assets/work-2.jpg";
-import work3 from "@/assets/work-3.jpg";
-import work4 from "@/assets/work-4.jpg";
-import work5 from "@/assets/work-5.jpg";
-import work6 from "@/assets/work-6.jpg";
-
-const EVENT_VIDEO = "/__l5e/assets-v1/ce380b59-253f-42e8-89f5-814e9d5f4a48/work-event.mp4";
-const PRODUCTION_VIDEO = "/__l5e/assets-v1/f6458a88-e128-4fda-90ac-22d9b4577074/work-production.mp4";
+import theMallThematic from "@/assets/works/the-mall-thematic.jpg";
+import theMallFood from "@/assets/works/the-mall-food.jpg";
+import theMallPet from "@/assets/works/the-mall-pet.jpg";
+import theMallShopping from "@/assets/works/the-mall-shopping.jpg";
+import theMallHarbourland from "@/assets/works/the-mall-harbourland.jpg";
+import emDistrictKv from "@/assets/works/em-district-kv.jpg";
+import okThinKv from "@/assets/works/ok-thin-kv.jpg";
+import okThinBus from "@/assets/works/ok-thin-bus.jpg";
+import moongPattanaBook from "@/assets/works/moong-pattana-book.jpg";
 
 type Work = {
   title: string;
+  client: string;
   category: string;
-  year: string;
+  year?: string;
   poster: string;
   video?: string;
-  span?: string;
+  span: string;
+  // Each piece keeps its own proportions. Forcing one ratio on all of them
+  // cropped the portrait key visuals down to a strip of their artwork.
+  ratio: string;
 };
 
 const works: Work[] = [
   {
-    title: "Out-of-home brand campaign",
-    category: "Advertising",
-    year: "2024",
-    poster: work1,
-    span: "sm:col-span-6 lg:col-span-7",
-  },
-  {
-    title: "Launch event & brand experience",
-    category: "Events / Film",
-    year: "2023",
-    poster: work3,
-    video: EVENT_VIDEO,
-    span: "sm:col-span-6 lg:col-span-5",
-  },
-  {
-    title: "Identity system & packaging",
+    client: "The Mall M7 M8",
+    title: "Thematic key visual",
     category: "Branding",
-    year: "2023",
-    poster: work2,
-    span: "sm:col-span-6 lg:col-span-5",
+    poster: theMallThematic,
+    span: "sm:col-span-12 lg:col-span-7",
+    ratio: "aspect-[1600/853]",
   },
   {
-    title: "Content production series",
-    category: "Film / Social",
-    year: "2025",
-    poster: work5,
-    video: PRODUCTION_VIDEO,
-    span: "sm:col-span-6 lg:col-span-7",
+    client: "Moong Pattana",
+    title: "The Book for All Moms",
+    category: "Campaign",
+    poster: moongPattanaBook,
+    span: "sm:col-span-12 lg:col-span-5",
+    ratio: "aspect-[1600/1066]",
   },
   {
-    title: "National press launch",
-    category: "Public Relations",
-    year: "2022",
-    poster: work4,
-    span: "sm:col-span-6 lg:col-span-6",
+    client: "The Mall M7 M8",
+    title: "Food zone",
+    category: "Retail",
+    poster: theMallFood,
+    span: "sm:col-span-6 lg:col-span-3",
+    ratio: "aspect-[1072/1600]",
   },
   {
-    title: "Retail pop-up installation",
-    category: "Experiential",
-    year: "2024",
-    poster: work6,
-    span: "sm:col-span-6 lg:col-span-6",
+    client: "The Mall M7 M8",
+    title: "Pet zone",
+    category: "Retail",
+    poster: theMallPet,
+    span: "sm:col-span-6 lg:col-span-3",
+    ratio: "aspect-[1072/1600]",
+  },
+  {
+    client: "The Mall M7 M8",
+    title: "Shopping zone",
+    category: "Retail",
+    poster: theMallShopping,
+    span: "sm:col-span-6 lg:col-span-3",
+    ratio: "aspect-[1073/1600]",
+  },
+  {
+    client: "The Mall M7 M8",
+    title: "Harbourland zone",
+    category: "Retail",
+    poster: theMallHarbourland,
+    span: "sm:col-span-6 lg:col-span-3",
+    ratio: "aspect-[1069/1600]",
+  },
+  {
+    client: "EM District",
+    title: "Thematic key visual",
+    category: "Branding",
+    poster: emDistrictKv,
+    span: "sm:col-span-12 lg:col-span-12",
+    ratio: "aspect-[1600/673]",
+  },
+  {
+    client: "OK Thin",
+    title: "Biscuit key visual",
+    category: "Advertising",
+    poster: okThinKv,
+    span: "sm:col-span-12 lg:col-span-7",
+    ratio: "aspect-[1600/900]",
+  },
+  {
+    client: "OK Thin",
+    title: "Bus campaign",
+    category: "Out-of-home",
+    poster: okThinBus,
+    span: "sm:col-span-12 lg:col-span-5",
+    ratio: "aspect-[1600/1055]",
   },
 ];
 
@@ -79,7 +111,7 @@ export function Works() {
             key={work.title}
             type="button"
             onClick={() => setActive(work)}
-            className={`group relative aspect-[4/3] overflow-hidden rounded-sm bg-secondary text-left ${work.span ?? ""}`}
+            className={`group relative overflow-hidden rounded-sm bg-secondary text-left ${work.ratio} ${work.span}`}
           >
             <img
               src={work.poster}
@@ -105,9 +137,10 @@ export function Works() {
             <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-5">
               <div>
                 <p className="hairline">
-                  {work.category} — {work.year}
+                  {work.client} — {work.category}
+                  {work.year ? ` — ${work.year}` : ""}
                 </p>
-                <h3 className="display mt-2 text-2xl md:text-3xl">{work.title}</h3>
+                <h3 className="display mt-2 text-xl md:text-2xl">{work.title}</h3>
               </div>
               {work.video && (
                 <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
@@ -145,7 +178,8 @@ export function Works() {
           )}
           <div className="px-3 pb-3 pt-1">
             <p className="hairline">
-              {active?.category} — {active?.year}
+              {active?.client} — {active?.category}
+              {active?.year ? ` — ${active.year}` : ""}
             </p>
             <h3 className="display mt-1 text-2xl">{active?.title}</h3>
           </div>

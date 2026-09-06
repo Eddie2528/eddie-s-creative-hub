@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+
+import { getCvUrl } from "@/lib/site-assets";
 import { ArrowUpRight, Download, Mail } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -26,12 +28,13 @@ export const Route = createFileRoute("/")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
+  loader: () => getCvUrl(),
   component: Index,
 });
 
-const CV_URL = "/files/Eddie-Nakharin-CV.pdf";
-
 function Index() {
+  const CV_URL = Route.useLoaderData();
+
   return (
     <div className="grain min-h-screen">
       <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur">

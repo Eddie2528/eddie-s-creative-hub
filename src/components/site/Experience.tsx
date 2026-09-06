@@ -1,23 +1,33 @@
+import vAnd from "@/assets/logos/v-and.png";
+import ogilvy from "@/assets/logos/ogilvy.png";
+import spicyHakuhodo from "@/assets/logos/spicy-hakuhodo.png";
+import cjWorx from "@/assets/logos/cj-worx.png";
+import delphysHakuhodo from "@/assets/logos/delphys-hakuhodo.png";
+import cenergy from "@/assets/logos/cenergy-innovation.png";
+import centerpoint from "@/assets/logos/centerpoint-entertainment.png";
+
 const companies = [
-  { name: "Ogilvy", mark: "OG" },
-  { name: "Leo Burnett", mark: "LB" },
-  { name: "Dentsu", mark: "DT" },
-  { name: "Wunderman", mark: "WT" },
-  { name: "VML", mark: "VM" },
-  { name: "Publicis", mark: "PB" },
-  { name: "TBWA", mark: "TB" },
-  { name: "Edelman", mark: "ED" },
-  { name: "Index Creative", mark: "IX" },
-  { name: "GREYnJ", mark: "GJ" },
+  { name: "V&", logo: vAnd },
+  { name: "Ogilvy", logo: ogilvy },
+  { name: "Spicy Hakuhodo", logo: spicyHakuhodo },
+  { name: "CJ Worx", logo: cjWorx },
+  { name: "Delphys Hakuhodo", logo: delphysHakuhodo },
+  { name: "Cenergy Innovation", logo: cenergy },
+  { name: "CenterPoint Entertainment", logo: centerpoint },
 ];
 
-function LogoTile({ name, mark }: { name: string; mark: string }) {
+// Logos sit on a light chip rather than the page's dark card: they arrive in
+// their own brand colours, and one of them has no transparency at all, so a
+// dark tile would swallow some and box others in white.
+function LogoTile({ name, logo }: { name: string; logo: string }) {
   return (
-    <div className="mx-2 flex w-[clamp(9.5rem,28vw,12rem)] shrink-0 items-center gap-3 rounded-sm border min-w-0 border-border bg-card px-5 py-4 transition-colors hover:border-primary">
-      <span className="display flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-sm text-primary-foreground">
-        {mark}
-      </span>
-      <span className="truncate text-sm font-medium tracking-wide">{name}</span>
+    <div className="mx-2 flex h-20 w-[clamp(10rem,30vw,13rem)] shrink-0 items-center justify-center rounded-sm border border-border bg-white px-6 transition-colors hover:border-primary">
+      <img
+        src={logo}
+        alt={name}
+        loading="lazy"
+        className="max-h-10 w-auto max-w-full object-contain"
+      />
     </div>
   );
 }
@@ -26,7 +36,7 @@ export function ExperienceMarquee() {
   return (
     <div className="relative overflow-hidden py-2">
       <div className="marquee-track">
-        {[...companies, ...companies].map((company, i) => (
+        {[...companies, ...companies, ...companies].map((company, i) => (
           <LogoTile key={`${company.name}-${i}`} {...company} />
         ))}
       </div>

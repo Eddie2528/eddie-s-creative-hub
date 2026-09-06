@@ -10,6 +10,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ContentEditor } from "@/components/admin/ContentEditor";
 import { AssetManager } from "@/components/admin/AssetManager";
+import { WorksEditor } from "@/components/admin/WorksEditor";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   adminListLeads,
@@ -214,8 +215,13 @@ function AdminLeads() {
         <TabsList>
           <TabsTrigger value="leads">Leads</TabsTrigger>
           <TabsTrigger value="content">Content</TabsTrigger>
+          <TabsTrigger value="works">Works</TabsTrigger>
           <TabsTrigger value="files">Files</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="works" className="mt-6">
+          <WorksEditor />
+        </TabsContent>
 
         <TabsContent value="files" className="mt-6">
           <AssetManager />

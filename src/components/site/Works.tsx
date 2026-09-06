@@ -13,6 +13,7 @@ import okThinBus from "@/assets/works/ok-thin-bus.jpg";
 import moongPattanaBook from "@/assets/works/moong-pattana-book.jpg";
 
 type Work = {
+  id: string;
   title: string;
   client: string;
   category: string;
@@ -29,6 +30,7 @@ type Work = {
 
 const works: Work[] = [
   {
+    id: "the-mall-thematic",
     client: "The Mall M7 M8",
     title: "Thematic key visual",
     category: "Branding",
@@ -37,6 +39,7 @@ const works: Work[] = [
     ratio: "aspect-[4/3]",
   },
   {
+    id: "moong-pattana-book",
     client: "Moong Pattana",
     title: "The Book for All Moms",
     category: "Campaign",
@@ -45,6 +48,7 @@ const works: Work[] = [
     ratio: "aspect-[4/3]",
   },
   {
+    id: "the-mall-food",
     client: "The Mall M7 M8",
     title: "Food zone",
     category: "Retail",
@@ -53,6 +57,7 @@ const works: Work[] = [
     ratio: "aspect-[3/4]",
   },
   {
+    id: "the-mall-pet",
     client: "The Mall M7 M8",
     title: "Pet zone",
     category: "Retail",
@@ -61,6 +66,7 @@ const works: Work[] = [
     ratio: "aspect-[3/4]",
   },
   {
+    id: "the-mall-shopping",
     client: "The Mall M7 M8",
     title: "Shopping zone",
     category: "Retail",
@@ -69,6 +75,7 @@ const works: Work[] = [
     ratio: "aspect-[3/4]",
   },
   {
+    id: "the-mall-harbourland",
     client: "The Mall M7 M8",
     title: "Harbourland zone",
     category: "Retail",
@@ -77,6 +84,7 @@ const works: Work[] = [
     ratio: "aspect-[3/4]",
   },
   {
+    id: "em-district-kv",
     client: "EM District",
     title: "Thematic key visual",
     category: "Branding",
@@ -85,6 +93,7 @@ const works: Work[] = [
     ratio: "aspect-[21/9]",
   },
   {
+    id: "ok-thin-kv",
     client: "OK Thin",
     title: "Biscuit key visual",
     category: "Advertising",
@@ -93,6 +102,7 @@ const works: Work[] = [
     ratio: "aspect-[4/3]",
   },
   {
+    id: "ok-thin-bus",
     client: "OK Thin",
     title: "Bus campaign",
     category: "Out-of-home",
@@ -102,7 +112,7 @@ const works: Work[] = [
   },
 ];
 
-export function Works() {
+export function Works({ images = {} }: { images?: Record<string, string> }) {
   const [active, setActive] = useState<Work | null>(null);
 
   return (
@@ -116,7 +126,7 @@ export function Works() {
             className={`group relative overflow-hidden rounded-sm bg-secondary text-left ${work.ratio} ${work.span}`}
           >
             <img
-              src={work.poster}
+              src={images[`works.${work.id}`] ?? work.poster}
               alt={work.title}
               loading="lazy"
               className="absolute inset-0 size-full object-cover transition-transform duration-700 group-hover:scale-105"
@@ -158,7 +168,7 @@ export function Works() {
           {active?.video ? (
             <video
               src={active.video}
-              poster={active.poster}
+              poster={images[`works.${active.id}`] ?? active.poster}
               controls
               autoPlay
               loop
@@ -168,7 +178,7 @@ export function Works() {
           ) : (
             active && (
               <img
-                src={active.poster}
+                src={images[`works.${active.id}`] ?? active.poster}
                 alt={active.title}
                 className="mx-auto max-h-[75vh] w-auto max-w-full rounded-sm object-contain"
               />

@@ -7,14 +7,16 @@ import cenergy from "@/assets/logos/cenergy-innovation.png";
 import centerpoint from "@/assets/logos/centerpoint-entertainment.png";
 
 const companies = [
-  { name: "V&", logo: vAnd },
-  { name: "Ogilvy", logo: ogilvy },
-  { name: "Spicy Hakuhodo", logo: spicyHakuhodo },
-  { name: "CJ Worx", logo: cjWorx },
-  { name: "Delphys Hakuhodo", logo: delphysHakuhodo },
-  { name: "Cenergy Innovation", logo: cenergy },
-  { name: "CenterPoint Entertainment", logo: centerpoint },
+  { id: "v-and", name: "V&", logo: vAnd },
+  { id: "ogilvy", name: "Ogilvy", logo: ogilvy },
+  { id: "spicy-hakuhodo", name: "Spicy Hakuhodo", logo: spicyHakuhodo },
+  { id: "cj-worx", name: "CJ Worx", logo: cjWorx },
+  { id: "delphys-hakuhodo", name: "Delphys Hakuhodo", logo: delphysHakuhodo },
+  { id: "cenergy-innovation", name: "Cenergy Innovation", logo: cenergy },
+  { id: "centerpoint-entertainment", name: "CenterPoint Entertainment", logo: centerpoint },
 ];
+
+export type ImageOverrides = Record<string, string>;
 
 // Logos sit on a light chip rather than the page's dark card: they arrive in
 // their own brand colours, and one of them has no transparency at all, so a
@@ -32,12 +34,16 @@ function LogoTile({ name, logo }: { name: string; logo: string }) {
   );
 }
 
-export function ExperienceMarquee() {
+export function ExperienceMarquee({ images = {} }: { images?: ImageOverrides }) {
   return (
     <div className="relative overflow-hidden py-2">
       <div className="marquee-track">
         {[...companies, ...companies, ...companies].map((company, i) => (
-          <LogoTile key={`${company.name}-${i}`} {...company} />
+          <LogoTile
+            key={`${company.id}-${i}`}
+            name={company.name}
+            logo={images[`logo.${company.id}`] ?? company.logo}
+          />
         ))}
       </div>
       <div className="pointer-events-none absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-background to-transparent" />

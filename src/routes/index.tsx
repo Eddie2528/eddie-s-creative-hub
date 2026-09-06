@@ -123,7 +123,7 @@ function Index() {
             <h2 className="display mt-4 text-[clamp(1.9rem,6vw,4rem)]">{content["experience.heading"]}</h2>
           </div>
           <div className="mt-10">
-            <ExperienceMarquee />
+            <ExperienceMarquee images={images} />
           </div>
           <div className="mx-auto mt-14 w-full max-w-6xl px-[clamp(1rem,4vw,2.5rem)]">
             <RoleList />
@@ -137,7 +137,7 @@ function Index() {
             <h2 className="display mt-4 text-[clamp(1.9rem,6vw,4rem)]">{content["works.heading"]}</h2>
             <p className="mt-4 max-w-xl text-muted-foreground">{content["works.note"]}</p>
             <div className="mt-10">
-              <Works />
+              <Works images={images} />
             </div>
           </div>
         </section>

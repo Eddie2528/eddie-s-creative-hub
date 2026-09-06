@@ -97,6 +97,24 @@ export const IMAGE_FIELDS: ImageField[] = [
   { key: "hero.photo2", section: "Hero", label: "Carousel photo 2" },
   { key: "hero.photo3", section: "Hero", label: "Carousel photo 3" },
   { key: "profile.photo", section: "Profile", label: "Profile photo" },
+
+  { key: "logo.v-and", section: "Logos", label: "V&" },
+  { key: "logo.ogilvy", section: "Logos", label: "Ogilvy" },
+  { key: "logo.spicy-hakuhodo", section: "Logos", label: "Spicy Hakuhodo" },
+  { key: "logo.cj-worx", section: "Logos", label: "CJ Worx" },
+  { key: "logo.delphys-hakuhodo", section: "Logos", label: "Delphys Hakuhodo" },
+  { key: "logo.cenergy-innovation", section: "Logos", label: "Cenergy Innovation" },
+  { key: "logo.centerpoint-entertainment", section: "Logos", label: "CenterPoint Entertainment" },
+
+  { key: "works.the-mall-thematic", section: "Works", label: "The Mall — Thematic" },
+  { key: "works.moong-pattana-book", section: "Works", label: "Moong Pattana — Book for All Moms" },
+  { key: "works.the-mall-food", section: "Works", label: "The Mall — Food zone" },
+  { key: "works.the-mall-pet", section: "Works", label: "The Mall — Pet zone" },
+  { key: "works.the-mall-shopping", section: "Works", label: "The Mall — Shopping zone" },
+  { key: "works.the-mall-harbourland", section: "Works", label: "The Mall — Harbourland zone" },
+  { key: "works.em-district-kv", section: "Works", label: "EM District — Thematic" },
+  { key: "works.ok-thin-kv", section: "Works", label: "OK Thin — Biscuit KV" },
+  { key: "works.ok-thin-bus", section: "Works", label: "OK Thin — Bus campaign" },
 ];
 
 export type SiteContent = Record<string, string>;

@@ -12,9 +12,16 @@ export class NotAuthorized extends Error {
   }
 }
 
+// No password configured means no way in — never a way past. Callers that can
+// report it distinguish "not set up" from "wrong", because the two need
+// completely different fixes and the difference tells an attacker nothing they
+// could act on: with no password set, nobody gets in either way.
+function configuredPassword(): string | null {
+  return process.env["ADMIN_PASSWORD"] || null;
+}
+
 function adminPassword(): string {
-  const password = process.env["ADMIN_PASSWORD"];
-  // No password configured means no way in — never a way past.
+  const password = configuredPassword();
   if (!password) throw new NotAuthorized();
   return password;
 }
@@ -43,11 +50,16 @@ function equals(a: string, b: string): boolean {
   return diff === 0;
 }
 
-export async function signInAdmin(password: string): Promise<boolean> {
-  if (!equals(password, adminPassword())) {
+export type SignInResult = "ok" | "wrong" | "not_configured";
+
+export async function signInAdmin(password: string): Promise<SignInResult> {
+  const expected = configuredPassword();
+  if (!expected) return "not_configured";
+
+  if (!equals(password, expected)) {
     // Slows a guessing script to a crawl while costing a real person nothing.
     await new Promise((resolve) => setTimeout(resolve, 600));
-    return false;
+    return "wrong";
   }
 
   const expires = Date.now() + TTL_MS;
@@ -58,7 +70,7 @@ export async function signInAdmin(password: string): Promise<boolean> {
     path: "/",
     maxAge: TTL_MS / 1000,
   });
-  return true;
+  return "ok";
 }
 
 export function signOutAdmin(): void {

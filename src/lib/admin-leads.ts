@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
+import type { SignInResult } from "./admin-session";
+
 export const LEAD_STATUSES = ["new", "contacted", "archived"] as const;
 export type LeadStatus = (typeof LEAD_STATUSES)[number];
 
@@ -17,9 +19,9 @@ export type Lead = {
 
 export const adminSignIn = createServerFn({ method: "POST" })
   .validator(z.object({ password: z.string().min(1).max(200) }))
-  .handler(async ({ data }): Promise<{ ok: boolean }> => {
+  .handler(async ({ data }): Promise<{ result: SignInResult }> => {
     const { signInAdmin } = await import("./admin-session");
-    return { ok: await signInAdmin(data.password) };
+    return { result: await signInAdmin(data.password) };
   });
 
 export const adminSignOut = createServerFn({ method: "POST" }).handler(async () => {

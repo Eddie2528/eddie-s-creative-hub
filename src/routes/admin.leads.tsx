@@ -91,8 +91,12 @@ function AdminLeads() {
     setSigningIn(true);
     setError(null);
     try {
-      const { ok } = await adminSignIn({ data: { password } });
-      if (!ok) {
+      const { result } = await adminSignIn({ data: { password } });
+      if (result === "not_configured") {
+        setError("No admin password is set on the server. Add ADMIN_PASSWORD as a Cloud secret, then publish.");
+        return;
+      }
+      if (result === "wrong") {
         setError("Wrong password.");
         return;
       }
@@ -149,7 +153,7 @@ function AdminLeads() {
       <main className="grid min-h-dvh place-items-center px-6">
         <form onSubmit={handleSignIn} className="w-full max-w-sm space-y-4">
           <div>
-            <h1 className="display text-3xl">Leads</h1>
+            <h1 className="display text-3xl">Back-office</h1>
             <p className="mt-1 text-sm text-muted-foreground">Enter the admin password to continue.</p>
           </div>
           <div className="space-y-2">

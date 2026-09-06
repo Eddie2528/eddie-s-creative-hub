@@ -21,12 +21,11 @@ events, business development) that converts visitors into inbound leads.
 - Works grid (image + video), personal profile section
 - Sticky "Get in Touch" button opening a lead dialog
 - CV download button
-- Lovable Cloud enabled (Supabase client wired, **zero tables so far**)
+- Lovable Cloud enabled; `leads` table live and receiving real submissions
 
 ### Known gaps
 | Gap | Impact | Owner |
 | --- | --- | --- |
-| Lead form does not persist — `handleSubmit` only flips `sent` state | **Every inbound lead is lost** | This PRD, §3 |
 | No notification on submit | Eddie doesn't know a lead arrived | §3 |
 | No way to read leads back | Data would be write-only | §4 |
 | Company names, roles, CV file are placeholders | Site shows fake credentials | Eddie supplies real assets |
@@ -54,13 +53,18 @@ Columns mirror the existing form inputs exactly (`name`, `email`, `phone`,
 
 ### Security (non-negotiable)
 
-The site is public and unauthenticated, so RLS must be explicit:
+`leads` is reachable only through the service role, which only server-side code
+can hold. RLS is on and **no policy grants anon or authenticated anything**, so
+a leaked publishable key buys nothing.
 
-- **RLS enabled** on `leads`.
-- **Anonymous users:** `INSERT` only. No `SELECT`, `UPDATE`, or `DELETE` —
-  otherwise anyone could read every lead Eddie has ever received.
-- **Reading leads** happens server-side or behind auth (§4), never with the
-  publishable key from the browser.
+The first cut granted `select` and `update` to `authenticated`, which a Lovable
+security scan flagged as critical — correctly. "Authenticated" is not a guest
+list: Supabase accepts sign-ups through its auth API whether or not the site
+shows a login form, so it meant anyone who bothered to register could read every
+lead. `0002_lock_down_leads.sql` revokes it.
+
+**Being signed in is not authorization.** Anything that later reads leads for a
+person must check that it is Eddie, explicitly.
 
 ### Behaviour
 - Submit writes one row, then shows the existing thank-you state.
@@ -131,13 +135,15 @@ Constraints:
   Preview and production are separate builds with different bundle hashes.
 - **`VITE_*` env vars don't reach the production build** (see §3), which is why
   writes go through the server.
-- Publishing and pushing both cost zero credits. Prompts cost ~1 each.
+- **The server does have `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`** in
+  `process.env`, even though the client env is missing. A live submission
+  reached the database through the server function, which is what proves it.
+- Publishing and pushing both cost zero credits. Prompts cost ~1 each, and the
+  security scanner's "Try to fix all" is free — but it rewrites policies its own
+  way, so for anything touching lead data, write the SQL and run it yourself.
 
 ## 7. Open questions
 
-- Are `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` present in the deployed
-  server's `process.env`? If not, the server function fails the same way the
-  browser client did, and Lovable has to wire them in.
 - Email-on-new-lead: Lovable Cloud `Emails`, or an edge function?
 - Which auth method for the back-office — magic link or password?
 
@@ -145,7 +151,8 @@ Constraints:
 
 1. ~~Apply the `leads` table~~ — done, `supabase/migrations/0001_leads.sql`.
 2. ~~Wire the form to save~~ — done, via the server function.
-3. Publish, then verify a real submission lands in the table.
-4. Add email notification.
-5. Build `/admin/leads`.
-6. Replace placeholder logos, work samples, and the CV file.
+3. ~~Verify a real submission lands in the table~~ — done on the live site.
+4. Apply `0002_lock_down_leads.sql` via `Cloud → SQL editor`.
+5. Add email notification.
+6. Build `/admin/leads`, authorizing Eddie explicitly (see §3).
+7. Replace placeholder logos, work samples, and the CV file.

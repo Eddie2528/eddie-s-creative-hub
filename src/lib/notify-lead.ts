@@ -11,6 +11,12 @@ export type LeadNotification = {
 
 const SITE = "https://eddie-nakharin.lovable.app";
 
+// The send API rejects a runtime-triggered email without sender_domain
+// (400 missing_parameter), despite the SDK typing it optional. It has to be a
+// domain the project is allowed to send from; override once a custom domain is
+// verified in Cloud → Emails.
+const DEFAULT_SENDER_DOMAIN = "eddie-nakharin.lovable.app";
+
 function escapeHtml(value: string) {
   return value
     .replace(/&/g, "&amp;")
@@ -64,7 +70,7 @@ function render(lead: LeadNotification) {
 export async function notifyNewLead(lead: LeadNotification): Promise<void> {
   const apiKey = process.env["LOVABLE_API_KEY"];
   const to = process.env["LEAD_NOTIFY_TO"] ?? "eddd612@gmail.com";
-  const senderDomain = process.env["LEAD_NOTIFY_DOMAIN"];
+  const senderDomain = process.env["LEAD_NOTIFY_DOMAIN"] ?? DEFAULT_SENDER_DOMAIN;
 
   if (!apiKey) {
     console.warn("[lead] LOVABLE_API_KEY missing; skipping notification email");
@@ -77,8 +83,8 @@ export async function notifyNewLead(lead: LeadNotification): Promise<void> {
     await sendLovableEmail(
       {
         to,
-        from: { name: "Eddie's Creative Hub", address: `noreply@${senderDomain ?? "lovable.app"}` },
-        ...(senderDomain ? { sender_domain: senderDomain } : {}),
+        from: { name: "Eddie's Creative Hub", address: `noreply@${senderDomain}` },
+        sender_domain: senderDomain,
         // So hitting reply in the mail client answers the lead, not the robot.
         reply_to: lead.email,
         subject: `New lead: ${lead.name}`,

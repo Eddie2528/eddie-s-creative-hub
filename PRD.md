@@ -80,6 +80,14 @@ checks out of reach of the browser.
 Note `**/server/**` is import-protected by TanStack Start — a server function
 imported by client code must live elsewhere, hence `src/lib/`.
 
+Moving the write to the server was not enough on its own. `src/start.ts`
+registers the generated `attachSupabaseAuth` as global `functionMiddleware`, and
+it calls `supabase.auth.getSession()` in the browser — so the missing client env
+took down *every* server function before the request left the page, including
+ones needing no session. `src/lib/attach-supabase-auth.ts` replaces it with a
+version that attaches a token when one is available and proceeds without it
+otherwise. The generated file is left untouched; Lovable rewrites it.
+
 ## 4. Feature: back-office (priority 2)
 
 A private page to read and work the leads. Build this in Claude Code, not

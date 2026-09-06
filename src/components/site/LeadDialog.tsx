@@ -35,23 +35,28 @@ export function LeadDialog({ children }: { children: ReactNode }) {
     setError(null);
 
     const message = String(data.get("message") ?? "").trim();
-    const { error: insertError } = await supabase.from("leads").insert({
+    const lead = {
       name: String(data.get("name") ?? "").trim(),
       email: String(data.get("email") ?? "").trim(),
       phone: String(data.get("phone") ?? "").trim(),
       message: message || null,
       source: typeof window === "undefined" ? null : window.location.pathname,
-    });
+    };
 
-    setSubmitting(false);
-
-    if (insertError) {
+    try {
+      // Anything here can throw, not just reject: creating the client throws
+      // outright when its env vars are missing. Catch it, or the button sits
+      // on "Sending…" forever and the lead is lost with no way to retry.
+      const { error: insertError } = await supabase.from("leads").insert(lead);
+      if (insertError) throw insertError;
+      setSent(true);
+    } catch (cause) {
+      console.error("Lead submission failed", cause);
       // The form is left as-is so nothing typed is lost.
       setError("Couldn't send that — please try again, or email me directly.");
-      return;
+    } finally {
+      setSubmitting(false);
     }
-
-    setSent(true);
   }
 
   return (

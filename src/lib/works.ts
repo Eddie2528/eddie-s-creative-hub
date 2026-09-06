@@ -18,6 +18,9 @@ export type Work = {
   visible: boolean;
   assetName: string | null;
   posterName: string | null;
+  // Created in the back-office rather than the code catalogue: only these can
+  // be deleted, and only these carry their own campaign.
+  isCustom: boolean;
 };
 
 export type Campaign = { name: string; works: Work[] };
@@ -31,6 +34,10 @@ type WorkRow = {
   // Null means "whatever the catalogue names".
   asset: string | null;
   poster: string | null;
+  // Only set on pieces added from the back-office, which have no catalogue
+  // entry to take them from.
+  campaign: string | null;
+  kind: WorkKind | null;
 };
 
 const ORDER_KEY = "works.campaign_order";
@@ -96,7 +103,7 @@ function resolve(asset: string): string {
 async function merged(): Promise<Work[]> {
   let rows: WorkRow[] = [];
   try {
-    const { data, error } = await (await worksTable()).select("id,title,category,sort,visible,asset,poster");
+    const { data, error } = await (await worksTable()).select("id,title,category,sort,visible,asset,poster,campaign,kind");
     if (error) throw new Error(error.message);
     rows = data ?? [];
   } catch (cause) {
@@ -105,7 +112,7 @@ async function merged(): Promise<Work[]> {
 
   const byId = new Map(rows.map((row) => [row.id, row]));
 
-  return WORKS_CATALOGUE.map((entry, index) => {
+  const catalogued = WORKS_CATALOGUE.map((entry, index) => {
     const row = byId.get(entry.id);
     return {
       id: entry.id,
@@ -124,8 +131,34 @@ async function merged(): Promise<Work[]> {
       posterName: row?.poster ?? null,
       sort: row?.sort ?? index,
       visible: row?.visible ?? true,
+      isCustom: false,
     };
   });
+
+  // Pieces created in the back-office: no catalogue entry, so everything comes
+  // from the row. One without a campaign or a file has nowhere to appear, so
+  // it's skipped rather than rendered as an empty tile.
+  const known = new Set(WORKS_CATALOGUE.map((entry) => entry.id));
+  const custom = rows
+    // A piece with no file yet still belongs in the back-office list; it just
+    // can't render, which getCampaigns takes care of.
+    .filter((row) => !known.has(row.id) && row.campaign)
+    .map((row) => ({
+      id: row.id,
+      campaign: row.campaign as string,
+      title: row.title,
+      category: row.category,
+      kind: (row.kind ?? "image") as WorkKind,
+      asset: row.asset ? resolve(row.asset) : "",
+      poster: row.poster ? resolve(row.poster) : null,
+      assetName: row.asset,
+      posterName: row.poster,
+      sort: row.sort,
+      visible: row.visible,
+      isCustom: true,
+    }));
+
+  return [...catalogued, ...custom];
 }
 
 function group(works: Work[], order: string[]): Campaign[] {
@@ -150,9 +183,9 @@ function group(works: Work[], order: string[]): Campaign[] {
 export const getCampaigns = createServerFn({ method: "GET" }).handler(async (): Promise<Campaign[]> => {
   const [works, saved] = await Promise.all([merged(), savedCampaignOrder()]);
   const order = saved.length > 0 ? saved : CAMPAIGN_ORDER;
-  return group(works.filter((work) => work.visible), order).filter(
-    (campaign) => campaign.works.length > 0,
-  );
+  // Nothing to show for a piece with no file, or a campaign left empty.
+  const renderable = works.filter((work) => work.visible && work.asset);
+  return group(renderable, order).filter((campaign) => campaign.works.length > 0);
 });
 
 // The back-office needs the hidden pieces too, or they'd be impossible to
@@ -162,7 +195,17 @@ export const adminListCampaigns = createServerFn({ method: "POST" }).handler(
     const { requireAdmin } = await import("./admin-session");
     await requireAdmin();
     const [works, saved] = await Promise.all([merged(), savedCampaignOrder()]);
-    return group(works, saved.length > 0 ? saved : CAMPAIGN_ORDER);
+    const order = saved.length > 0 ? saved : CAMPAIGN_ORDER;
+    const grouped = group(works, order);
+    // A campaign someone created but hasn't put anything in yet lives only in
+    // the order list; without this it would vanish the moment they reloaded.
+    const present = new Set(grouped.map((campaign) => campaign.name));
+    const empties = order.filter((name) => !present.has(name)).map((name) => ({ name, works: [] }));
+    return group([...works], order).concat(empties).sort((a, b) => {
+      const ai = order.indexOf(a.name);
+      const bi = order.indexOf(b.name);
+      return (ai === -1 ? Number.MAX_SAFE_INTEGER : ai) - (bi === -1 ? Number.MAX_SAFE_INTEGER : bi);
+    });
   },
 );
 
@@ -179,6 +222,8 @@ export const adminSaveWorks = createServerFn({ method: "POST" })
             visible: z.boolean(),
             asset: z.string().max(200).nullable(),
             poster: z.string().max(200).nullable(),
+            campaign: z.string().max(120).nullable(),
+            kind: z.enum(["image", "video"]).nullable(),
           }),
         )
         .max(200),
@@ -189,13 +234,15 @@ export const adminSaveWorks = createServerFn({ method: "POST" })
     const { requireAdmin } = await import("./admin-session");
     await requireAdmin();
 
-    // Only pieces the catalogue knows: a row for anything else would never be
-    // rendered and would just sit there confusing the next reader.
+    // Catalogue pieces, plus anything created here — recognisable by carrying
+    // its own campaign, since a catalogue piece takes that from the code.
     const known = new Set(WORKS_CATALOGUE.map((entry) => entry.id));
-    const rows = data.entries.filter((entry) => known.has(entry.id));
-    if (rows.length === 0) return { ok: true };
+    const rows = data.entries.filter((entry) => known.has(entry.id) || entry.campaign);
+    if (rows.length === 0 && !data.campaignOrder) return { ok: true };
 
-    const { error } = await (await worksTable()).upsert(rows, { onConflict: "id" });
+    const { error } = rows.length
+      ? await (await worksTable()).upsert(rows, { onConflict: "id" })
+      : { error: null };
     if (error) throw new Error(
         `Couldn’t save works — ${error.message}. A missing site_works table or column means ` +
           `migrations 0004 and 0005 still need running in the Cloud SQL editor.`,
@@ -211,5 +258,31 @@ export const adminSaveWorks = createServerFn({ method: "POST" })
             `table means migration 0003 still needs running in the Cloud SQL editor.`,
         );
     }
+    return { ok: true };
+  });
+
+export const adminDeleteWork = createServerFn({ method: "POST" })
+  .validator(z.object({ id: z.string().min(1).max(120) }))
+  .handler(async ({ data }): Promise<{ ok: true }> => {
+    const { requireAdmin } = await import("./admin-session");
+    await requireAdmin();
+
+    // Catalogue pieces can only be hidden — deleting the row would just bring
+    // back the built-in version and look like the delete failed.
+    if (WORKS_CATALOGUE.some((entry) => entry.id === data.id)) {
+      throw new Error("Built-in pieces can be hidden but not deleted.");
+    }
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await (
+      supabaseAdmin as unknown as {
+        from(t: string): { delete(): { eq(c: string, v: string): PromiseLike<{ error: { message: string } | null }> } };
+      }
+    )
+      .from("site_works")
+      .delete()
+      .eq("id", data.id);
+
+    if (error) throw new Error(`Couldn’t delete — ${error.message}`);
     return { ok: true };
   });

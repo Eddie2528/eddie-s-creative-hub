@@ -1,9 +1,15 @@
 import { useEffect, useState } from "react";
-import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, Eye, EyeOff, GripVertical, Play } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, Eye, EyeOff, GripVertical, Play, Plus, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { adminListCampaigns, adminSaveWorks, type Campaign, type Work } from "@/lib/works";
+import {
+  adminDeleteWork,
+  adminListCampaigns,
+  adminSaveWorks,
+  type Campaign,
+  type Work,
+} from "@/lib/works";
 import { adminListAssets, type Asset } from "@/lib/admin-assets";
 import { resolveBundled } from "@/lib/bundled-works";
 
@@ -112,6 +118,8 @@ export function WorksEditor() {
               visible: work.visible,
               asset: work.assetName,
               poster: work.posterName,
+              campaign: work.isCustom ? campaign.name : null,
+              kind: work.isCustom ? work.kind : null,
             })),
           ),
           campaignOrder: campaigns.map((campaign) => campaign.name),
@@ -130,6 +138,48 @@ export function WorksEditor() {
     }
   }
 
+  function addCampaign() {
+    const name = prompt("Campaign name")?.trim();
+    if (!name) return;
+    if (campaigns.some((campaign) => campaign.name === name)) {
+      setError(`There's already a campaign called ${name}.`);
+      return;
+    }
+    setCampaigns((current) => [...current, { name, works: [] }]);
+    setDirty(true);
+  }
+
+  function addPiece(campaignName: string, kind: Work["kind"]) {
+    update(campaignName, (works) => [
+      ...works,
+      {
+        id: `custom-${crypto.randomUUID()}`,
+        campaign: campaignName,
+        title: "Untitled",
+        category: kind === "video" ? "Film" : "Branding",
+        kind,
+        asset: "",
+        poster: null,
+        assetName: null,
+        posterName: null,
+        sort: works.length,
+        visible: true,
+        isCustom: true,
+      },
+    ]);
+  }
+
+  async function removePiece(campaignName: string, work: Work) {
+    if (!confirm(`Delete “${work.title}”? This can't be undone.`)) return;
+    update(campaignName, (works) => works.filter((w) => w.id !== work.id));
+    try {
+      await adminDeleteWork({ data: { id: work.id } });
+    } catch (cause) {
+      console.error("Deleting work failed", cause);
+      setError(cause instanceof Error ? cause.message : "Couldn't delete.");
+    }
+  }
+
   if (loading) return <p className="py-10 text-muted-foreground">Loading…</p>;
 
   const hiddenCount = campaigns.flatMap((c) => c.works).filter((w) => !w.visible).length;
@@ -139,7 +189,8 @@ export function WorksEditor() {
       <p className="text-sm text-muted-foreground">
         Campaigns and the pieces inside them appear on the site in this order. Drag a campaign by
         its handle, or use the chevrons — dragging needs a mouse, the chevrons work anywhere. The
-        arrows on a row move one piece. Hidden pieces stay here so you can bring them back.
+        arrows on a row move one piece. Hidden pieces stay here so you can bring them back. A new
+        piece needs a file picked before it can appear on the site.
         {hiddenCount ? ` ${hiddenCount} hidden.` : ""}
       </p>
 
@@ -303,12 +354,34 @@ export function WorksEditor() {
                   >
                     {work.visible ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
                   </Button>
+                  {work.isCustom ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      aria-label="Delete"
+                      onClick={() => void removePiece(campaign.name, work)}
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  ) : null}
                 </div>
               </li>
             ))}
           </ul>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => addPiece(campaign.name, "image")}>
+              <Plus className="size-4" /> Image
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => addPiece(campaign.name, "video")}>
+              <Plus className="size-4" /> Film
+            </Button>
+          </div>
         </section>
       ))}
+
+      <Button variant="outline" onClick={addCampaign}>
+        <Plus className="size-4" /> New campaign
+      </Button>
 
       <div className="fixed inset-x-0 bottom-0 border-t border-border bg-background/95 backdrop-blur">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">

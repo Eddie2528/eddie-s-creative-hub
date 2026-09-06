@@ -62,10 +62,10 @@ export const WORKS_CATALOGUE: CatalogueEntry[] = [
   { id: "airasia-chiang-rai", campaign: "AirAsia", title: "My Name is Chiang Rai", category: "Film", kind: "video", asset: "airasia-chiang-rai.mp4", poster: "airasia-chiang-rai.jpg" },
 ];
 
-// Campaign order on the page, and the order pieces start in within each.
+// Where campaigns start out. A saved order in site_content overrides this.
 export const CAMPAIGN_ORDER = [
-  "The Mall M7 M8",
   "EM District",
+  "The Mall M7 M8",
   "Krungthai",
   "OK Thin",
   "Moong Pattana",

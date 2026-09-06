@@ -112,7 +112,7 @@ it was, so the CMS can never take the page down.
 | --- | --- |
 | 1 ✅ | Text: headings, kickers, intro copy, stats, buttons, footer, page meta |
 | 2 ✅ | Files tab for Cloud Storage, and a Photos picker covering every picture on the page — hero carousel, profile portrait, seven agency logos, nine work posters |
-| 3 ✅ | Works tab: group by campaign, retitle, reorder, hide, and point a piece at a different file — everything about a work is edited in one place |
+| 3 ✅ | Works tab: order the campaigns and the pieces inside them, retitle, hide, and point a piece at a different file — everything about a work is edited in one place |
 
 Adding an editable field is one entry in `CONTENT_FIELDS`; the admin form
 renders itself from that list.

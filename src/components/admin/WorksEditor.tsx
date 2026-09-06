@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowDown, ArrowUp, Eye, EyeOff, Play } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, Eye, EyeOff, Play } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,6 +51,20 @@ export function WorksEditor() {
     setDirty(true);
   }
 
+  function moveCampaign(index: number, delta: number) {
+    setCampaigns((current) => {
+      const next = [...current];
+      const target = index + delta;
+      const from = next[index];
+      const to = next[target];
+      if (!from || !to) return current;
+      next[index] = to;
+      next[target] = from;
+      return next;
+    });
+    setDirty(true);
+  }
+
   function move(campaignName: string, index: number, delta: number) {
     update(campaignName, (works) => {
       const next = [...works];
@@ -82,6 +96,7 @@ export function WorksEditor() {
               poster: work.posterName,
             })),
           ),
+          campaignOrder: campaigns.map((campaign) => campaign.name),
         },
       });
       setDirty(false);
@@ -102,14 +117,35 @@ export function WorksEditor() {
   return (
     <div className="space-y-8 pb-28">
       <p className="text-sm text-muted-foreground">
-        Pieces are grouped by campaign, in the order they appear on the site. Hidden pieces stay
-        here so you can bring them back.
+        Campaigns and the pieces inside them appear on the site in this order. Use the chevrons
+        beside a campaign name to move the whole group, and the arrows on a row to move one piece.
+        Hidden pieces stay here so you can bring them back.
         {hiddenCount ? ` ${hiddenCount} hidden.` : ""}
       </p>
 
-      {campaigns.map((campaign) => (
+      {campaigns.map((campaign, campaignIndex) => (
         <section key={campaign.name} className="space-y-3">
-          <h2 className="display text-xl">{campaign.name}</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="display text-xl">{campaign.name}</h2>
+            <Button
+              variant="outline"
+              size="sm"
+              aria-label={`Move ${campaign.name} up`}
+              disabled={campaignIndex === 0}
+              onClick={() => moveCampaign(campaignIndex, -1)}
+            >
+              <ChevronUp className="size-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              aria-label={`Move ${campaign.name} down`}
+              disabled={campaignIndex === campaigns.length - 1}
+              onClick={() => moveCampaign(campaignIndex, 1)}
+            >
+              <ChevronDown className="size-4" />
+            </Button>
+          </div>
           <ul className="divide-y divide-border rounded-lg border border-border">
             {campaign.works.map((work, index) => (
               <li

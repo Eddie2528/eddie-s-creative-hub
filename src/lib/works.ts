@@ -33,6 +33,41 @@ type WorkRow = {
   poster: string | null;
 };
 
+const ORDER_KEY = "works.campaign_order";
+
+type ContentRowTable = {
+  from(table: "site_content"): {
+    select(columns: string): {
+      eq(column: string, value: string): {
+        maybeSingle(): PromiseLike<{ data: { value: string } | null }>;
+      };
+    };
+    upsert(
+      rows: { key: string; value: string }[],
+      options?: { onConflict?: string },
+    ): PromiseLike<{ error: { message: string } | null }>;
+  };
+};
+
+async function contentRows() {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return (supabaseAdmin as unknown as ContentRowTable).from("site_content");
+}
+
+// The saved campaign order, stored as one row rather than a column per
+// campaign — the list is short and only ever read whole.
+async function savedCampaignOrder(): Promise<string[]> {
+  try {
+    const { data } = await (await contentRows()).select("value").eq("key", ORDER_KEY).maybeSingle();
+    if (!data?.value) return [];
+    const parsed: unknown = JSON.parse(data.value);
+    return Array.isArray(parsed) ? parsed.filter((n): n is string => typeof n === "string") : [];
+  } catch (cause) {
+    console.error("[works] Using the built-in campaign order", cause);
+    return [];
+  }
+}
+
 type WorksTable = {
   from(table: "site_works"): {
     select(columns: string): PromiseLike<{ data: WorkRow[] | null; error: { message: string } | null }>;
@@ -93,7 +128,7 @@ async function merged(): Promise<Work[]> {
   });
 }
 
-function group(works: Work[]): Campaign[] {
+function group(works: Work[], order: string[]): Campaign[] {
   const campaigns = new Map<string, Work[]>();
   for (const work of works) {
     const list = campaigns.get(work.campaign) ?? [];
@@ -104,16 +139,20 @@ function group(works: Work[]): Campaign[] {
   return [...campaigns.entries()]
     .map(([name, list]) => ({ name, works: list.sort((a, b) => a.sort - b.sort) }))
     .sort((a, b) => {
-      // Campaigns the catalogue names keep that order; anything new goes last.
-      const ai = CAMPAIGN_ORDER.indexOf(a.name);
-      const bi = CAMPAIGN_ORDER.indexOf(b.name);
+      // A saved order wins; then the catalogue's; anything named in neither
+      // goes last rather than jumping to the front.
+      const ai = order.indexOf(a.name);
+      const bi = order.indexOf(b.name);
       return (ai === -1 ? Number.MAX_SAFE_INTEGER : ai) - (bi === -1 ? Number.MAX_SAFE_INTEGER : bi);
     });
 }
 
 export const getCampaigns = createServerFn({ method: "GET" }).handler(async (): Promise<Campaign[]> => {
-  const works = (await merged()).filter((work) => work.visible);
-  return group(works).filter((campaign) => campaign.works.length > 0);
+  const [works, saved] = await Promise.all([merged(), savedCampaignOrder()]);
+  const order = saved.length > 0 ? saved : CAMPAIGN_ORDER;
+  return group(works.filter((work) => work.visible), order).filter(
+    (campaign) => campaign.works.length > 0,
+  );
 });
 
 // The back-office needs the hidden pieces too, or they'd be impossible to
@@ -122,7 +161,8 @@ export const adminListCampaigns = createServerFn({ method: "POST" }).handler(
   async (): Promise<Campaign[]> => {
     const { requireAdmin } = await import("./admin-session");
     await requireAdmin();
-    return group(await merged());
+    const [works, saved] = await Promise.all([merged(), savedCampaignOrder()]);
+    return group(works, saved.length > 0 ? saved : CAMPAIGN_ORDER);
   },
 );
 
@@ -142,6 +182,7 @@ export const adminSaveWorks = createServerFn({ method: "POST" })
           }),
         )
         .max(200),
+      campaignOrder: z.array(z.string().min(1).max(120)).max(50).optional(),
     }),
   )
   .handler(async ({ data }): Promise<{ ok: true }> => {
@@ -156,5 +197,13 @@ export const adminSaveWorks = createServerFn({ method: "POST" })
 
     const { error } = await (await worksTable()).upsert(rows, { onConflict: "id" });
     if (error) throw new Error(`Failed to save works: ${error.message}`);
+
+    if (data.campaignOrder) {
+      const { error: orderError } = await (await contentRows()).upsert(
+        [{ key: ORDER_KEY, value: JSON.stringify(data.campaignOrder) }],
+        { onConflict: "key" },
+      );
+      if (orderError) throw new Error(`Failed to save campaign order: ${orderError.message}`);
+    }
     return { ok: true };
   });

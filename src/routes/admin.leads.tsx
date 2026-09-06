@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ContentEditor } from "@/components/admin/ContentEditor";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   adminListLeads,
@@ -21,7 +23,7 @@ import {
 export const Route = createFileRoute("/admin/leads")({
   head: () => ({
     meta: [
-      { title: "Leads" },
+      { title: "Back-office" },
       // Keep the lead list out of search results even though it needs a password.
       { name: "robots", content: "noindex, nofollow" },
     ],
@@ -177,7 +179,7 @@ function AdminLeads() {
     <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="display text-3xl sm:text-4xl">Leads</h1>
+          <h1 className="display text-3xl sm:text-4xl">Back-office</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {leads.length} total · {leads.filter((l) => l.status === "new").length} new
           </p>
@@ -203,6 +205,17 @@ function AdminLeads() {
         </div>
       </header>
 
+      <Tabs defaultValue="leads" className="mt-8">
+        <TabsList>
+          <TabsTrigger value="leads">Leads</TabsTrigger>
+          <TabsTrigger value="content">Content</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="content" className="mt-6">
+          <ContentEditor />
+        </TabsContent>
+
+        <TabsContent value="leads">
       <div className="mt-6 flex flex-wrap gap-3">
         <div className="relative min-w-56 flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -264,6 +277,9 @@ function AdminLeads() {
           </TableBody>
         </Table>
       </div>
+
+        </TabsContent>
+      </Tabs>
 
       <Sheet open={open !== null} onOpenChange={(next) => !next && setOpen(null)}>
         <SheetContent className="w-full overflow-y-auto sm:max-w-md">

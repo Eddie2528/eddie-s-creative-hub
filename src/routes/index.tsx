@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { getCvUrl } from "@/lib/site-assets";
+import { getSiteContent } from "@/lib/site-content";
 import { ArrowUpRight, Download, Mail } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -18,22 +19,29 @@ const DESCRIPTION =
   "18 years across advertising, branding, PR, events and business development. Portfolio, work experience and CV of Eddie Nakharin.";
 
 export const Route = createFileRoute("/")({
-  head: () => ({
+  head: ({ loaderData }) => {
+    const title = loaderData?.content["meta.title"] ?? TITLE;
+    const description = loaderData?.content["meta.description"] ?? DESCRIPTION;
+    return {
     meta: [
-      { title: TITLE },
-      { name: "description", content: DESCRIPTION },
-      { property: "og:title", content: TITLE },
-      { property: "og:description", content: DESCRIPTION },
+      { title },
+      { name: "description", content: description },
+      { property: "og:title", content: title },
+      { property: "og:description", content: description },
       { property: "og:type", content: "profile" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
+    };
+  },
+  loader: async () => ({
+    cvUrl: await getCvUrl(),
+    content: await getSiteContent(),
   }),
-  loader: () => getCvUrl(),
   component: Index,
 });
 
 function Index() {
-  const CV_URL = Route.useLoaderData();
+  const { cvUrl: CV_URL, content } = Route.useLoaderData();
 
   return (
     <div className="grain min-h-screen">
@@ -65,11 +73,12 @@ function Index() {
       <main id="top">
         {/* Hero */}
         <section className="mx-auto w-full max-w-6xl px-[clamp(1rem,4vw,2.5rem)] pb-[clamp(3.5rem,9vw,6rem)] pt-[clamp(2.5rem,7vw,6rem)]">
-          <p className="hairline">Bangkok — Advertising, Branding, PR, Events, BD</p>
+          <p className="hairline">{content["hero.kicker"]}</p>
           <h1 className="display mt-6 text-[clamp(2.75rem,11vw,8rem)]">
-            Creative mind,
+            {content["hero.headline1"]}
             <br />
-            <span className="text-primary">business</span> instinct.
+            <span className="text-primary">{content["hero.headline2"]}</span>{" "}
+            {content["hero.headline3"]}
           </h1>
 
           <div className="mt-[clamp(2rem,6vw,3rem)] grid gap-[clamp(1.5rem,4vw,2.5rem)] md:grid-cols-12 md:items-start">
@@ -83,28 +92,20 @@ function Index() {
               />
             </div>
             <div className="space-y-6 text-lg leading-relaxed text-muted-foreground md:col-span-7">
-              <p className="display text-3xl text-foreground md:text-4xl">Hi, I&rsquo;m Eddie.</p>
-              <p>
-                I&rsquo;ve spent the past 18 years working across advertising, branding, PR, events, and
-                business development.
-              </p>
-              <p>
-                My career started from a creative background. I studied Communication Design before
-                continuing with a Master&rsquo;s degree in Communication Arts, and over time I moved from
-                design and PR into client service and business leadership. That journey has shaped the way
-                I work today. I naturally look at a challenge from both the creative and business side.
-              </p>
+              <p className="display text-3xl text-foreground md:text-4xl">{content["hero.greeting"]}</p>
+              <p>{content["hero.intro1"]}</p>
+              <p>{content["hero.intro2"]}</p>
               <div className="flex flex-wrap gap-3 pt-2">
                 <LeadDialog>
                   <Button size="lg" className="font-semibold">
                     <Mail className="size-4" />
-                    Get in Touch
+                    {content["cta.primary"]}
                   </Button>
                 </LeadDialog>
                 <Button asChild size="lg" variant="outline">
                   <a href={CV_URL} download>
                     <Download className="size-4" />
-                    Download my CV
+                    {content["cta.secondary"]}
                   </a>
                 </Button>
               </div>
@@ -115,8 +116,8 @@ function Index() {
         {/* Experience */}
         <section id="experience" className="border-t border-border py-[clamp(3.5rem,9vw,6rem)]">
           <div className="mx-auto w-full max-w-6xl px-[clamp(1rem,4vw,2.5rem)]">
-            <p className="hairline">01 — Experience</p>
-            <h2 className="display mt-4 text-[clamp(1.9rem,6vw,4rem)]">Brands & teams I&rsquo;ve worked with</h2>
+            <p className="hairline">{content["experience.kicker"]}</p>
+            <h2 className="display mt-4 text-[clamp(1.9rem,6vw,4rem)]">{content["experience.heading"]}</h2>
           </div>
           <div className="mt-10">
             <ExperienceMarquee />
@@ -129,13 +130,9 @@ function Index() {
         {/* Works */}
         <section id="works" className="border-t border-border py-[clamp(3.5rem,9vw,6rem)]">
           <div className="mx-auto w-full max-w-6xl px-[clamp(1rem,4vw,2.5rem)]">
-            <p className="hairline">02 — Selected works</p>
-            <h2 className="display mt-4 text-[clamp(1.9rem,6vw,4rem)]">
-              Campaigns, brands & experiences
-            </h2>
-            <p className="mt-4 max-w-xl text-muted-foreground">
-              Hover a film to preview, click any piece to open it full size.
-            </p>
+            <p className="hairline">{content["works.kicker"]}</p>
+            <h2 className="display mt-4 text-[clamp(1.9rem,6vw,4rem)]">{content["works.heading"]}</h2>
+            <p className="mt-4 max-w-xl text-muted-foreground">{content["works.note"]}</p>
             <div className="mt-10">
               <Works />
             </div>
@@ -156,24 +153,15 @@ function Index() {
               />
             </div>
             <div className="space-y-5 md:col-span-7">
-              <p className="hairline">03 — Personal profile</p>
-              <h2 className="display text-[clamp(2rem,6vw,3.5rem)]">Half maker, half dealmaker</h2>
-              <p className="text-muted-foreground">
-                I build relationships the same way I build campaigns: with a clear idea, honest
-                conversation and a plan that actually works commercially. Days are split between pitching,
-                shaping strategy with creative teams, and keeping clients close.
-              </p>
-              <p className="text-muted-foreground">
-                Outside work you&rsquo;ll find me shooting photos around Bangkok, collecting design books,
-                and mentoring young planners and designers who are figuring out their own path.
-              </p>
+              <p className="hairline">{content["profile.kicker"]}</p>
+              <h2 className="display text-[clamp(2rem,6vw,3.5rem)]">{content["profile.heading"]}</h2>
+              <p className="text-muted-foreground">{content["profile.para1"]}</p>
+              <p className="text-muted-foreground">{content["profile.para2"]}</p>
               <dl className="grid grid-cols-2 gap-6 pt-4 sm:grid-cols-4">
-                {[
-                  ["18+", "Years"],
-                  ["120+", "Campaigns"],
-                  ["40+", "Brands"],
-                  ["MA", "Comm. Arts"],
-                ].map(([value, label]) => (
+                {[1, 2, 3, 4].map((n) => [
+                  content[`profile.stat${n}.value`],
+                  content[`profile.stat${n}.label`],
+                ]).map(([value, label]) => (
                   <div key={label}>
                     <dt className="display text-3xl text-primary">{value}</dt>
                     <dd className="hairline mt-1">{label}</dd>
@@ -188,19 +176,20 @@ function Index() {
         <section className="border-t border-border py-[clamp(4rem,11vw,7rem)]">
           <div className="mx-auto w-full max-w-6xl px-[clamp(1rem,4vw,2.5rem)] text-center">
             <h2 className="display text-[clamp(2.25rem,9vw,6rem)]">
-              Let&rsquo;s make something<span className="text-primary">.</span>
+              {content["cta.heading"]}
+              <span className="text-primary">.</span>
             </h2>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <LeadDialog>
                 <Button size="lg" className="font-semibold">
-                  Get in Touch
+                  {content["cta.primary"]}
                   <ArrowUpRight className="size-4" />
                 </Button>
               </LeadDialog>
               <Button asChild size="lg" variant="outline">
                 <a href={CV_URL} download>
                   <Download className="size-4" />
-                  Download my CV
+                  {content["cta.secondary"]}
                 </a>
               </Button>
             </div>
@@ -210,8 +199,8 @@ function Index() {
 
       <footer className="border-t border-border py-8">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-5 text-sm text-muted-foreground md:flex-row">
-          <span>© {new Date().getFullYear()} Eddie Nakharin</span>
-          <span>Bangkok, Thailand</span>
+          <span>© {new Date().getFullYear()} {content["footer.name"]}</span>
+          <span>{content["footer.location"]}</span>
         </div>
       </footer>
 
@@ -220,7 +209,7 @@ function Index() {
         <LeadDialog>
           <Button size="lg" className="rounded-full px-6 font-semibold shadow-lg">
             <Mail className="size-4" />
-            Get in Touch
+            {content["cta.primary"]}
           </Button>
         </LeadDialog>
       </div>

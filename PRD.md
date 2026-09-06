@@ -93,6 +93,32 @@ otherwise. The generated file is left untouched; Lovable rewrites it.
 
 ## 4. Feature: back-office (priority 2)
 
+Lives at `/admin/leads`, behind a password checked server-side (`ADMIN_PASSWORD`
+as a Cloud secret). Supabase Auth isn't an option — the browser client has no
+working env in production — and "signed in" wouldn't have meant "Eddie" anyway.
+A correct password sets an HMAC-signed httpOnly cookie; every server function
+re-checks it.
+
+Two tabs: **Leads** (search, status filters, detail panel, CSV) and **Content**
+(§4b).
+
+### 4b. Content editing — phased
+
+Every editable string lives in `src/lib/site-content.ts` with its fallback, and
+rows in `site_content` override them. An empty table renders the site exactly as
+it was, so the CMS can never take the page down.
+
+| Phase | Scope |
+| --- | --- |
+| 1 ✅ | Text: headings, kickers, intro copy, stats, buttons, footer, page meta |
+| 2 | Images via Cloud Storage — hero carousel, profile photo, work posters, CV |
+| 3 | Lists: add/remove/reorder companies, roles and works |
+
+Adding an editable field is one entry in `CONTENT_FIELDS`; the admin form
+renders itself from that list.
+
+### Original sketch
+
 A private page to read and work the leads. Build this in Claude Code, not
 Lovable — it is detailed UI work and Lovable credits are the scarce resource.
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, Eye, EyeOff, Play } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, Eye, EyeOff, GripVertical, Play } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,8 @@ export function WorksEditor() {
   const [justSaved, setJustSaved] = useState(false);
   const [videos, setVideos] = useState<Asset[]>([]);
   const [images, setImages] = useState<Asset[]>([]);
+  const [dragging, setDragging] = useState<number | null>(null);
+  const [dropTarget, setDropTarget] = useState<number | null>(null);
 
   useEffect(() => {
     void (async () => {
@@ -63,6 +65,22 @@ export function WorksEditor() {
       return next;
     });
     setDirty(true);
+  }
+
+  // Lifts the dragged campaign out and drops it in, rather than swapping the
+  // two: dragging past several campaigns should land where it was released.
+  function dropCampaign(to: number) {
+    setCampaigns((current) => {
+      if (dragging === null || dragging === to) return current;
+      const next = [...current];
+      const [moved] = next.splice(dragging, 1);
+      if (!moved) return current;
+      next.splice(to, 0, moved);
+      return next;
+    });
+    if (dragging !== null && dragging !== to) setDirty(true);
+    setDragging(null);
+    setDropTarget(null);
   }
 
   function move(campaignName: string, index: number, delta: number) {
@@ -117,15 +135,40 @@ export function WorksEditor() {
   return (
     <div className="space-y-8 pb-28">
       <p className="text-sm text-muted-foreground">
-        Campaigns and the pieces inside them appear on the site in this order. Use the chevrons
-        beside a campaign name to move the whole group, and the arrows on a row to move one piece.
-        Hidden pieces stay here so you can bring them back.
+        Campaigns and the pieces inside them appear on the site in this order. Drag a campaign by
+        its handle, or use the chevrons — dragging needs a mouse, the chevrons work anywhere. The
+        arrows on a row move one piece. Hidden pieces stay here so you can bring them back.
         {hiddenCount ? ` ${hiddenCount} hidden.` : ""}
       </p>
 
       {campaigns.map((campaign, campaignIndex) => (
-        <section key={campaign.name} className="space-y-3">
+        <section
+          key={campaign.name}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDropTarget(campaignIndex);
+          }}
+          onDrop={() => dropCampaign(campaignIndex)}
+          className={`space-y-3 rounded-lg transition-colors ${
+            dropTarget === campaignIndex && dragging !== campaignIndex
+              ? "outline-dashed outline-2 outline-offset-4 outline-primary"
+              : ""
+          } ${dragging === campaignIndex ? "opacity-40" : ""}`}
+        >
           <div className="flex items-center gap-2">
+            <span
+              draggable
+              onDragStart={() => setDragging(campaignIndex)}
+              onDragEnd={() => {
+                setDragging(null);
+                setDropTarget(null);
+              }}
+              aria-hidden
+              title="Drag to reorder"
+              className="cursor-grab rounded p-1 text-muted-foreground hover:bg-card active:cursor-grabbing"
+            >
+              <GripVertical className="size-5" />
+            </span>
             <h2 className="display text-xl">{campaign.name}</h2>
             <Button
               variant="outline"

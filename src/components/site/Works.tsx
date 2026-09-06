@@ -20,8 +20,10 @@ type Work = {
   poster: string;
   video?: string;
   span: string;
-  // Each piece keeps its own proportions. Forcing one ratio on all of them
-  // cropped the portrait key visuals down to a strip of their artwork.
+  // The tile's ratio, chosen for its slot in the grid rather than for the
+  // artwork: key visuals arrive anywhere from 2:3 to 2.4:1, and letting each
+  // one set its own height left the grid ragged. Cropping here is safe because
+  // opening a piece shows it uncropped.
   ratio: string;
 };
 
@@ -32,7 +34,7 @@ const works: Work[] = [
     category: "Branding",
     poster: theMallThematic,
     span: "sm:col-span-12 lg:col-span-7",
-    ratio: "aspect-[1600/853]",
+    ratio: "aspect-[4/3]",
   },
   {
     client: "Moong Pattana",
@@ -40,7 +42,7 @@ const works: Work[] = [
     category: "Campaign",
     poster: moongPattanaBook,
     span: "sm:col-span-12 lg:col-span-5",
-    ratio: "aspect-[1600/1066]",
+    ratio: "aspect-[4/3]",
   },
   {
     client: "The Mall M7 M8",
@@ -48,7 +50,7 @@ const works: Work[] = [
     category: "Retail",
     poster: theMallFood,
     span: "sm:col-span-6 lg:col-span-3",
-    ratio: "aspect-[1072/1600]",
+    ratio: "aspect-[3/4]",
   },
   {
     client: "The Mall M7 M8",
@@ -56,7 +58,7 @@ const works: Work[] = [
     category: "Retail",
     poster: theMallPet,
     span: "sm:col-span-6 lg:col-span-3",
-    ratio: "aspect-[1072/1600]",
+    ratio: "aspect-[3/4]",
   },
   {
     client: "The Mall M7 M8",
@@ -64,7 +66,7 @@ const works: Work[] = [
     category: "Retail",
     poster: theMallShopping,
     span: "sm:col-span-6 lg:col-span-3",
-    ratio: "aspect-[1073/1600]",
+    ratio: "aspect-[3/4]",
   },
   {
     client: "The Mall M7 M8",
@@ -72,7 +74,7 @@ const works: Work[] = [
     category: "Retail",
     poster: theMallHarbourland,
     span: "sm:col-span-6 lg:col-span-3",
-    ratio: "aspect-[1069/1600]",
+    ratio: "aspect-[3/4]",
   },
   {
     client: "EM District",
@@ -80,7 +82,7 @@ const works: Work[] = [
     category: "Branding",
     poster: emDistrictKv,
     span: "sm:col-span-12 lg:col-span-12",
-    ratio: "aspect-[1600/673]",
+    ratio: "aspect-[21/9]",
   },
   {
     client: "OK Thin",
@@ -88,7 +90,7 @@ const works: Work[] = [
     category: "Advertising",
     poster: okThinKv,
     span: "sm:col-span-12 lg:col-span-7",
-    ratio: "aspect-[1600/900]",
+    ratio: "aspect-[4/3]",
   },
   {
     client: "OK Thin",
@@ -96,7 +98,7 @@ const works: Work[] = [
     category: "Out-of-home",
     poster: okThinBus,
     span: "sm:col-span-12 lg:col-span-5",
-    ratio: "aspect-[1600/1055]",
+    ratio: "aspect-[4/3]",
   },
 ];
 
@@ -116,8 +118,6 @@ export function Works() {
             <img
               src={work.poster}
               alt={work.title}
-              width={1280}
-              height={960}
               loading="lazy"
               className="absolute inset-0 size-full object-cover transition-transform duration-700 group-hover:scale-105"
             />
@@ -163,16 +163,14 @@ export function Works() {
               autoPlay
               loop
               playsInline
-              className="w-full rounded-sm"
+              className="mx-auto max-h-[75vh] w-auto max-w-full rounded-sm"
             />
           ) : (
             active && (
               <img
                 src={active.poster}
                 alt={active.title}
-                width={1280}
-                height={960}
-                className="w-full rounded-sm"
+                className="mx-auto max-h-[75vh] w-auto max-w-full rounded-sm object-contain"
               />
             )
           )}

@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { getCvUrl } from "@/lib/site-assets";
 import { getSiteContent, getSiteImages } from "@/lib/site-content";
+import { getVideoWorks } from "@/lib/video-works";
 import { ArrowUpRight, Download, Mail } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -37,12 +38,13 @@ export const Route = createFileRoute("/")({
     cvUrl: await getCvUrl(),
     content: await getSiteContent(),
     images: await getSiteImages(),
+    films: await getVideoWorks(),
   }),
   component: Index,
 });
 
 function Index() {
-  const { cvUrl: CV_URL, content, images } = Route.useLoaderData();
+  const { cvUrl: CV_URL, content, images, films } = Route.useLoaderData();
   // An uploaded photo wins; otherwise the one bundled with the build.
   const photo = (key: string, fallback: string) => images[key] ?? fallback;
 
@@ -126,7 +128,7 @@ function Index() {
             <ExperienceMarquee images={images} />
           </div>
           <div className="mx-auto mt-14 w-full max-w-6xl px-[clamp(1rem,4vw,2.5rem)]">
-            <RoleList />
+            <RoleList content={content} />
           </div>
         </section>
 
@@ -137,7 +139,7 @@ function Index() {
             <h2 className="display mt-4 text-[clamp(1.9rem,6vw,4rem)]">{content["works.heading"]}</h2>
             <p className="mt-4 max-w-xl text-muted-foreground">{content["works.note"]}</p>
             <div className="mt-10">
-              <Works images={images} />
+              <Works images={images} films={films} />
             </div>
           </div>
         </section>

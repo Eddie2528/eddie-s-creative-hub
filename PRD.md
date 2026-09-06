@@ -27,7 +27,7 @@ events, business development) that converts visitors into inbound leads.
 | Gap | Impact | Owner |
 | --- | --- | --- |
 | No way to read leads back | Data would be write-only | §4 |
-| Company names, roles, CV file are placeholders | Site shows fake credentials | Eddie supplies real assets |
+| Role years are blank | Titles and companies are real; the years aren't known | Eddie fills them in the Content tab |
 
 ## 3. Feature: lead capture (priority 1)
 
@@ -193,4 +193,5 @@ Constraints:
 5. ~~Add email notification~~ — written, but dormant: sending needs a paid
    plan (see §6). Set `LEAD_NOTIFY_DOMAIN` to switch it on.
 6. Build `/admin/leads`, authorizing Eddie explicitly (see §3).
-7. Replace placeholder logos, work samples, and the CV file.
+7. Upload the compressed films, their posters and the CV in the Files tab —
+   film work appears on the site by itself once both files are present.

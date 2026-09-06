@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Play } from "lucide-react";
 
+import type { VideoWork } from "@/lib/video-works";
+
 import theMallThematic from "@/assets/works/the-mall-thematic.jpg";
 import theMallFood from "@/assets/works/the-mall-food.jpg";
 import theMallPet from "@/assets/works/the-mall-pet.jpg";
@@ -112,13 +114,23 @@ const works: Work[] = [
   },
 ];
 
-export function Works({ images = {} }: { images?: Record<string, string> }) {
+export function Works({
+  images = {},
+  films = [],
+}: {
+  images?: Record<string, string>;
+  films?: VideoWork[];
+}) {
   const [active, setActive] = useState<Work | null>(null);
+
+  // Film first: it carries the room better than a still, and the stills read as
+  // supporting work underneath.
+  const all: Work[] = [...films, ...works];
 
   return (
     <>
       <div className="grid gap-[clamp(0.75rem,2vw,1.25rem)] sm:grid-cols-12">
-        {works.map((work) => (
+        {all.map((work) => (
           <button
             key={work.title}
             type="button"

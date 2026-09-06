@@ -52,40 +52,27 @@ export function ExperienceMarquee({ images = {} }: { images?: ImageOverrides }) 
   );
 }
 
-const roles = [
-  {
-    period: "2019 — Now",
-    title: "Business Development Director",
-    detail: "Leading new business, pitches and client growth across integrated communications.",
-  },
-  {
-    period: "2014 — 2019",
-    title: "Client Service Director",
-    detail: "Running key accounts across advertising, branding and integrated campaigns.",
-  },
-  {
-    period: "2010 — 2014",
-    title: "PR & Brand Manager",
-    detail: "Brand storytelling, media relations and launch programmes for regional brands.",
-  },
-  {
-    period: "2008 — 2010",
-    title: "Designer / Art Director",
-    detail: "Where it started: communication design, identity and campaign craft.",
-  },
-];
+const ROLE_COUNT = 7;
 
-export function RoleList() {
+export function RoleList({ content = {} }: { content?: Record<string, string> }) {
+  const roles = Array.from({ length: ROLE_COUNT }, (_, i) => ({
+    period: content[`role${i + 1}.period`] ?? "",
+    title: content[`role${i + 1}.title`] ?? "",
+    company: content[`role${i + 1}.company`] ?? "",
+  })).filter((role) => role.title || role.company);
+
   return (
     <ul className="divide-y divide-border border-y border-border">
-      {roles.map((role) => (
+      {roles.map((role, i) => (
         <li
-          key={role.title}
+          key={`${role.title}-${i}`}
           className="grid gap-2 py-6 transition-colors hover:bg-card md:grid-cols-12 md:items-baseline md:gap-6 md:px-4"
         >
-          <span className="hairline md:col-span-3">{role.period}</span>
-          <h3 className="display text-2xl md:col-span-4 md:text-3xl">{role.title}</h3>
-          <p className="text-sm text-muted-foreground md:col-span-5">{role.detail}</p>
+          {/* The years are blank until someone fills them in, so the column
+              holds its width rather than letting the titles jump left. */}
+          <span className="hairline md:col-span-3">{role.period || "—"}</span>
+          <h3 className="display text-2xl md:col-span-5 md:text-3xl">{role.title}</h3>
+          <p className="text-sm text-muted-foreground md:col-span-4">{role.company}</p>
         </li>
       ))}
     </ul>

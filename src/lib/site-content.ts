@@ -140,6 +140,12 @@ export const IMAGE_FIELDS: ImageField[] = [
   { key: "works.ok-thin-bus", section: "Works", label: "OK Thin — Bus campaign" },
 ];
 
+// Documents the back-office can point at, same idea as IMAGE_FIELDS: the value
+// is a filename in the bucket, and empty means the file bundled with the build.
+export const FILE_FIELDS: ImageField[] = [
+  { key: "cv.file", section: "Documents", label: "CV (PDF)" },
+];
+
 export type SiteContent = Record<string, string>;
 
 export const CONTENT_DEFAULTS: SiteContent = Object.fromEntries(
@@ -215,6 +221,7 @@ export const adminSaveContent = createServerFn({ method: "POST" })
     const known = new Set([
       ...CONTENT_FIELDS.map((field) => field.key),
       ...IMAGE_FIELDS.map((field) => field.key),
+      ...FILE_FIELDS.map((field) => field.key),
     ]);
     const rows = data.entries.filter((entry) => known.has(entry.key));
     if (rows.length === 0) return { ok: true };

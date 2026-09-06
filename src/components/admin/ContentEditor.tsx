@@ -9,6 +9,7 @@ import {
   CONTENT_DEFAULTS,
   CONTENT_FIELDS,
   getSiteContent,
+  FILE_FIELDS,
   IMAGE_FIELDS,
   type SiteContent,
 } from "@/lib/site-content";
@@ -26,6 +27,7 @@ export function ContentEditor() {
   const [error, setError] = useState<string | null>(null);
   const [justSaved, setJustSaved] = useState(false);
   const [images, setImages] = useState<Asset[]>([]);
+  const [docs, setDocs] = useState<Asset[]>([]);
 
   useEffect(() => {
     void (async () => {
@@ -38,6 +40,7 @@ export function ContentEditor() {
         setSaved(content);
         setDraft(content);
         setImages(assets.filter((a) => IMAGE_TYPES.test(a.contentType ?? "")));
+        setDocs(assets.filter((a) => !IMAGE_TYPES.test(a.contentType ?? "") && !/^video\//.test(a.contentType ?? "")));
       } catch (cause) {
         console.error("Loading content failed", cause);
         setError("Couldn't load the current text.");
@@ -53,6 +56,7 @@ export function ContentEditor() {
     () => [
       ...CONTENT_FIELDS.map((f) => ({ key: f.key })),
       ...IMAGE_FIELDS.map((f) => ({ key: f.key })),
+      ...FILE_FIELDS.map((f) => ({ key: f.key })),
     ],
     [],
   );
@@ -169,6 +173,35 @@ export function ContentEditor() {
             No images uploaded yet — add some in the Files tab.
           </p>
         ) : null}
+      </section>
+
+      <section className="space-y-4">
+        <h2 className="display text-xl">Documents</h2>
+        <div className="grid gap-4 md:grid-cols-2">
+          {FILE_FIELDS.map((field) => (
+            <div key={field.key} className="space-y-2">
+              <Label htmlFor={field.key} className="flex items-center gap-2">
+                {field.label}
+                {(draft[field.key] ?? "") !== (saved[field.key] ?? "") ? (
+                  <span className="size-1.5 rounded-full bg-primary" />
+                ) : null}
+              </Label>
+              <select
+                id={field.key}
+                value={draft[field.key] ?? ""}
+                onChange={(e) => setDraft((d) => ({ ...d, [field.key]: e.target.value }))}
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+              >
+                <option value="">Built-in file</option>
+                {docs.map((doc) => (
+                  <option key={doc.name} value={doc.name}>
+                    {doc.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ))}
+        </div>
       </section>
 
       {/* Pinned so the save button is reachable without scrolling back up. */}

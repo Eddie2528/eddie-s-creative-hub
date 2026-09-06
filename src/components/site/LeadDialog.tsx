@@ -7,7 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 import { HONEYPOT, submitLead } from "@/lib/submit-lead";
 
-export function LeadDialog({ children }: { children: ReactNode }) {
+export function LeadDialog({
+  children,
+  content = {},
+}: {
+  children: ReactNode;
+  content?: Record<string, string>;
+}) {
+  const t = (key: string, fallback: string) => content[key] || fallback;
   const [open, setOpen] = useState(false);
   const [sent, setSent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -71,7 +78,7 @@ export function LeadDialog({ children }: { children: ReactNode }) {
       <DialogContent className="max-h-[90vh] overflow-y-auto border-border bg-card sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="display text-3xl">
-            {sent ? "Message sent" : "Get in touch"}
+            {sent ? t("form.sent.title", "Message sent") : t("form.title", "Get in touch")}
           </DialogTitle>
         </DialogHeader>
 
@@ -80,30 +87,30 @@ export function LeadDialog({ children }: { children: ReactNode }) {
             <span className="flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground">
               <Check className="size-7" />
             </span>
-            <p className="text-lg font-medium">Got it! thanks! I&rsquo;ll be in touch soon.</p>
+            <p className="text-lg font-medium">{t("form.sent.body", "Got it! thanks! I\u2019ll be in touch soon.")}</p>
             <Button variant="outline" onClick={() => setOpen(false)}>
-              Close
+              {t("form.close", "Close")}
             </Button>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4 pt-2">
             <div className="space-y-2">
-              <Label htmlFor="lead-name">Name / Company&rsquo;s name</Label>
-              <Input id="lead-name" name="name" required placeholder="Your name or company" />
+              <Label htmlFor="lead-name">{t("form.name.label", "Name / Company\u2019s name")}</Label>
+              <Input id="lead-name" name="name" required placeholder={t("form.name.placeholder", "Your name or company")} />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="lead-email">Email</Label>
-                <Input id="lead-email" name="email" type="email" required placeholder="you@company.com" />
+                <Label htmlFor="lead-email">{t("form.email.label", "Email")}</Label>
+                <Input id="lead-email" name="email" type="email" required placeholder={t("form.email.placeholder", "you@company.com")} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="lead-phone">Phone number</Label>
-                <Input id="lead-phone" name="phone" type="tel" required placeholder="+66 ..." />
+                <Label htmlFor="lead-phone">{t("form.phone.label", "Phone number")}</Label>
+                <Input id="lead-phone" name="phone" type="tel" required placeholder={t("form.phone.placeholder", "+66 ...")} />
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="lead-message">How can I help?</Label>
-              <Textarea id="lead-message" name="message" rows={4} placeholder="Tell me about your project" />
+              <Label htmlFor="lead-message">{t("form.message.label", "Leave your message")}</Label>
+              <Textarea id="lead-message" name="message" rows={4} placeholder={t("form.message.placeholder", "Tell me about your project")} />
             </div>
 
             <div aria-hidden className="absolute left-[-9999px] top-0 size-0 overflow-hidden">
@@ -117,7 +124,7 @@ export function LeadDialog({ children }: { children: ReactNode }) {
             ) : null}
 
             <Button type="submit" size="lg" disabled={submitting} className="w-full font-semibold">
-              {submitting ? "Sending…" : "Submit"}
+              {submitting ? "Sending…" : t("form.submit", "Submit")}
             </Button>
           </form>
         )}

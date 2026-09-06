@@ -104,6 +104,20 @@ export const CONTENT_FIELDS: ContentField[] = [
   { key: "cta.primary", section: "Closing", label: "Primary button", value: "Get in Touch" },
   { key: "cta.secondary", section: "Closing", label: "Secondary button", value: "Download my CV" },
 
+
+  { key: "form.title", section: "Contact form", label: "Dialog heading", value: "Get in touch" },
+  { key: "form.name.label", section: "Contact form", label: "Name — label", value: "Name / Company’s name" },
+  { key: "form.name.placeholder", section: "Contact form", label: "Name — placeholder", value: "Your name or company" },
+  { key: "form.email.label", section: "Contact form", label: "Email — label", value: "Email" },
+  { key: "form.email.placeholder", section: "Contact form", label: "Email — placeholder", value: "you@company.com" },
+  { key: "form.phone.label", section: "Contact form", label: "Phone — label", value: "Phone number" },
+  { key: "form.phone.placeholder", section: "Contact form", label: "Phone — placeholder", value: "+66 ..." },
+  { key: "form.message.label", section: "Contact form", label: "Message — label", value: "Leave your message" },
+  { key: "form.message.placeholder", section: "Contact form", label: "Message — placeholder", value: "Tell me about your project" },
+  { key: "form.submit", section: "Contact form", label: "Submit button", value: "Submit" },
+  { key: "form.sent.title", section: "Contact form", label: "After sending — heading", value: "Message sent" },
+  { key: "form.sent.body", section: "Contact form", label: "After sending — message", multiline: true, value: "Got it! thanks! I’ll be in touch soon." },
+  { key: "form.close", section: "Contact form", label: "Close button", value: "Close" },
   { key: "footer.name", section: "Footer", label: "Name", value: "Eddie Nakharin" },
   { key: "footer.location", section: "Footer", label: "Location", value: "Bangkok, Thailand" },
 ];

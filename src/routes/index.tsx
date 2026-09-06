@@ -109,7 +109,7 @@ function Index() {
               <p>{content["hero.intro1"]}</p>
               <p>{content["hero.intro2"]}</p>
               <div className="flex flex-wrap gap-3 pt-2">
-                <LeadDialog>
+                <LeadDialog content={content}>
                   <Button size="lg" className="font-semibold">
                     <Mail className="size-4" />
                     {content["cta.primary"]}
@@ -193,7 +193,7 @@ function Index() {
               <span className="text-primary">.</span>
             </h2>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
-              <LeadDialog>
+              <LeadDialog content={content}>
                 <Button size="lg" className="font-semibold">
                   {content["cta.primary"]}
                   <ArrowUpRight className="size-4" />
@@ -219,7 +219,7 @@ function Index() {
 
       {/* Sticky lead button */}
       <div className="fixed bottom-4 right-4 z-50 sm:bottom-6 sm:right-6 md:bottom-8 md:right-8">
-        <LeadDialog>
+        <LeadDialog content={content}>
           <Button size="lg" className="rounded-full px-6 font-semibold shadow-lg">
             <Mail className="size-4" />
             {content["cta.primary"]}

@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ContentEditor } from "@/components/admin/ContentEditor";
+import { AssetManager } from "@/components/admin/AssetManager";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   adminListLeads,
@@ -209,7 +210,12 @@ function AdminLeads() {
         <TabsList>
           <TabsTrigger value="leads">Leads</TabsTrigger>
           <TabsTrigger value="content">Content</TabsTrigger>
+          <TabsTrigger value="files">Files</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="files" className="mt-6">
+          <AssetManager />
+        </TabsContent>
 
         <TabsContent value="content" className="mt-6">
           <ContentEditor />

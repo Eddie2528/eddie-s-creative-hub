@@ -111,11 +111,19 @@ it was, so the CMS can never take the page down.
 | Phase | Scope |
 | --- | --- |
 | 1 ✅ | Text: headings, kickers, intro copy, stats, buttons, footer, page meta |
-| 2 | Images via Cloud Storage — hero carousel, profile photo, work posters, CV |
+| 2 ✅ | Files tab: upload, replace and delete anything in Cloud Storage |
 | 3 | Lists: add/remove/reorder companies, roles and works |
 
 Adding an editable field is one entry in `CONTENT_FIELDS`; the admin form
 renders itself from that list.
+
+The Files tab manages the `site-assets` bucket. The bucket is created on first
+use by the server — it needs the service role, so it can't be a step someone
+remembers to do in the dashboard. Uploads travel as base64 through the server
+function rather than straight to Storage, since the browser has no Supabase
+credentials to sign an upload with; that caps a single file at ~60MB. Names are
+flattened to ASCII so a file picked from a Thai-named folder still yields a URL
+that survives copy-paste.
 
 ### Original sketch
 

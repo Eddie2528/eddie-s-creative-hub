@@ -4,6 +4,11 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 export function PhotoCarousel({ photos }: { photos: { src: string; alt: string }[] }) {
   const [index, setIndex] = useState(0);
 
+  // Dropping to fewer photos can leave the index past the end.
+  useEffect(() => {
+    setIndex((i) => (i < photos.length ? i : 0));
+  }, [photos.length]);
+
   useEffect(() => {
     if (photos.length < 2) return;
     const id = setInterval(() => setIndex((i) => (i + 1) % photos.length), 5000);

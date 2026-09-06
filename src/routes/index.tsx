@@ -48,6 +48,20 @@ function Index() {
   // An uploaded photo wins; otherwise the one bundled with the build.
   const photo = (key: string, fallback: string) => images[key] ?? fallback;
 
+  const heroSlots = [
+    { key: "hero.photo1", fallback: eddie1, alt: "Portrait of Eddie Nakharin" },
+    { key: "hero.photo2", fallback: eddie2, alt: "Eddie presenting brand strategy to a team" },
+    { key: "hero.photo3", fallback: eddie3, alt: "Eddie on a rooftop in Bangkok at dusk" },
+  ];
+  // Choosing one photo means one photo — the carousel drops its arrows, dots
+  // and auto-advance on its own once it has nothing to advance to. Only when
+  // no slot has been set at all do all three built-in photos stand in.
+  const chosen = heroSlots.filter((slot) => images[slot.key]);
+  const heroPhotos = (chosen.length > 0 ? chosen : heroSlots).map((slot) => ({
+    src: images[slot.key] ?? slot.fallback,
+    alt: images[slot.key] ? "Eddie Nakharin" : slot.alt,
+  }));
+
   return (
     <div className="grain min-h-screen">
       <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur">
@@ -88,13 +102,7 @@ function Index() {
 
           <div className="mt-[clamp(2rem,6vw,3rem)] grid gap-[clamp(1.5rem,4vw,2.5rem)] md:grid-cols-12 md:items-start">
             <div className="md:col-span-5">
-              <PhotoCarousel
-                photos={[
-                  { src: photo("hero.photo1", eddie1), alt: "Portrait of Eddie Nakharin" },
-                  { src: photo("hero.photo2", eddie2), alt: "Eddie presenting brand strategy to a team" },
-                  { src: photo("hero.photo3", eddie3), alt: "Eddie on a rooftop in Bangkok at dusk" },
-                ]}
-              />
+              <PhotoCarousel photos={heroPhotos} />
             </div>
             <div className="space-y-6 text-lg leading-relaxed text-muted-foreground md:col-span-7">
               <p className="display text-3xl text-foreground md:text-4xl">{content["hero.greeting"]}</p>

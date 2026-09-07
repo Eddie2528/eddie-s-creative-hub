@@ -88,7 +88,8 @@ function Index() {
       <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
           <a href="#top" className="display text-lg tracking-wide">
-            Eddie<span className="text-primary">.</span>
+            {content["header.wordmark"]}
+            <span className="text-primary">.</span>
           </a>
           <nav className="hidden gap-8 text-sm text-muted-foreground md:flex">
             <a href="#experience" className="transition-colors hover:text-foreground">

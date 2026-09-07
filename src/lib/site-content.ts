@@ -13,6 +13,7 @@ export type ContentField = {
 };
 
 export const CONTENT_FIELDS: ContentField[] = [
+  { key: "header.wordmark", section: "Page", label: "Header wordmark — the dot is added automatically", value: "Eddie Nakharin" },
   { key: "meta.title", section: "Page", label: "Browser title", value: "Eddie Nakharin — Brand, Communications & Business Development" },
   {
     key: "meta.description",

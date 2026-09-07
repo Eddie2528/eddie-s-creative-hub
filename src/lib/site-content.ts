@@ -82,6 +82,8 @@ export const CONTENT_FIELDS: ContentField[] = [
   { key: "cta.heading", section: "Closing", label: "Closing headline", value: "Let’s make something" },
   { key: "cta.primary", section: "Closing", label: "Primary button", value: "Get in Touch" },
   { key: "cta.secondary", section: "Closing", label: "Secondary button", value: "Download my CV" },
+  { key: "social.instagram", section: "Closing", label: "Instagram URL — blank hides the button", value: "https://www.instagram.com/eddie_uthaichalanon/" },
+  { key: "social.linkedin", section: "Closing", label: "LinkedIn URL — blank hides the button", value: "https://www.linkedin.com/in/nakharin-uthaichalanon-a10909101/" },
 
 
   { key: "form.title", section: "Contact form", label: "Dialog heading", value: "Get in touch" },

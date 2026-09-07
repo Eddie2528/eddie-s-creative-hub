@@ -7,7 +7,7 @@ import { resolveLogo } from "@/lib/bundled-logos";
 // dark tile would swallow some and box others in white.
 function LogoTile({ name, logo }: { name: string; logo: string }) {
   return (
-    <div className="flex h-20 w-[clamp(9rem,22vw,11.5rem)] items-center justify-center rounded-sm border border-border bg-white px-5 transition-colors hover:border-primary">
+    <div className="flex h-20 w-[clamp(9rem,22vw,11.5rem)] shrink-0 items-center justify-center rounded-sm border border-border bg-white px-5 transition-colors hover:border-primary">
       <img
         src={logo}
         alt={name}
@@ -19,14 +19,26 @@ function LogoTile({ name, logo }: { name: string; logo: string }) {
 }
 
 export function ExperienceMarquee({ logos = [] }: { logos?: ResolvedLogo[] }) {
-  // A static row, one tile per logo. It used to scroll, which meant repeating
-  // the set three times to keep the track full — and the repeats read as
-  // duplicates rather than as motion.
+  // Two tiles pointing at the same file would read as one logo printed twice,
+  // so only the first of each image makes it onto the track.
+  const unique = logos.filter(
+    (logo, i) => logos.findIndex((other) => other.src === logo.src) === i,
+  );
+
+  // Exactly two passes. The animation travels -50%, so two copies put the
+  // second where the first began and the loop closes without a jump — three
+  // copies land it mid-set and the strip visibly snaps.
+  const track = [...unique, ...unique];
+
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-wrap justify-center gap-3 px-[clamp(1rem,4vw,2.5rem)]">
-      {logos.map((logo) => (
-        <LogoTile key={logo.id} name={logo.name} logo={resolveLogo(logo.src) ?? ""} />
-      ))}
+    <div className="relative overflow-hidden py-2">
+      <div className="marquee-track gap-3">
+        {track.map((logo, i) => (
+          <LogoTile key={`${logo.id}-${i}`} name={logo.name} logo={resolveLogo(logo.src) ?? ""} />
+        ))}
+      </div>
+      <div className="pointer-events-none absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-background to-transparent" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-background to-transparent" />
     </div>
   );
 }

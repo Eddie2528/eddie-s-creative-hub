@@ -3,15 +3,7 @@ import { z } from "zod";
 
 import { SITE_BUCKET } from "./site-assets";
 
-// Where new uploads can go. Files already in the bucket root stay there —
-// moving them would break every stored reference, which names a file without
-// any folder.
-export const ASSET_FOLDERS = ["works", "logos", "profile", "documents"] as const;
-export type AssetFolder = (typeof ASSET_FOLDERS)[number];
-
 export type Asset = {
-  // Full path in the bucket, folder included — this is what gets stored and
-  // resolved, so it has to travel with the file.
   name: string;
   size: number;
   contentType: string | null;
@@ -31,7 +23,7 @@ type StorageApi = {
     from(bucket: string): {
       list(
         path: string,
-        options: { limit: number; sortBy?: { column: string; order: string } },
+        options: { limit: number; sortBy: { column: string; order: string } },
       ): PromiseLike<{
         data:
           | {
@@ -85,44 +77,31 @@ export const adminListAssets = createServerFn({ method: "POST" }).handler(async 
   await requireAdmin();
   await ensureBucket();
 
-  const api = (await storage()).from(SITE_BUCKET);
+  const { data, error } = await (await storage())
+    .from(SITE_BUCKET)
+    .list("", { limit: 500, sortBy: { column: "name", order: "asc" } });
+  if (error) throw new Error(`Failed to list files: ${error.message}`);
 
-  // Storage lists one prefix at a time, so the root and each folder are
-  // separate calls; entries without metadata are the folders themselves.
-  const read = async (prefix: string): Promise<Asset[]> => {
-    const { data, error } = await api.list(prefix, {
-      limit: 1000,
-      sortBy: { column: "name", order: "asc" },
-    });
-    if (error) throw new Error(`Failed to list files: ${error.message}`);
-    return (data ?? [])
-      .filter((item) => item.metadata)
-      .map((item) => {
-        const path = prefix ? `${prefix}/${item.name}` : item.name;
-        return {
-          name: path,
-          size: item.metadata?.size ?? 0,
-          contentType: item.metadata?.mimetype ?? null,
-          updatedAt: item.updated_at,
-          url: publicUrl(path),
-        };
-      });
-  };
-
-  const groups = await Promise.all(["", ...ASSET_FOLDERS].map(read));
-  return groups.flat();
+  return (data ?? [])
+    .filter((item) => item.metadata)
+    .map((item) => ({
+      name: item.name,
+      size: item.metadata?.size ?? 0,
+      contentType: item.metadata?.mimetype ?? null,
+      updatedAt: item.updated_at,
+      url: publicUrl(item.name),
+    }));
 });
 
 export const adminUploadAsset = createServerFn({ method: "POST" })
   .validator(
     z.object({
-      // The filename itself carries no slashes; the folder is chosen separately.
+      // No slashes or traversal: everything lands flat in the bucket root.
       name: z
         .string()
         .min(1)
         .max(160)
         .regex(/^[A-Za-z0-9._-]+$/, "Use letters, numbers, dots, dashes and underscores only"),
-      folder: z.enum(ASSET_FOLDERS).nullable(),
       contentType: z.string().max(128),
       base64: z.string().max(140_000_000),
     }),
@@ -136,9 +115,7 @@ export const adminUploadAsset = createServerFn({ method: "POST" })
     const bytes = new Uint8Array(binary.length);
     for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
 
-    const path = data.folder ? `${data.folder}/${data.name}` : data.name;
-
-    const { error } = await (await storage()).from(SITE_BUCKET).upload(path, bytes, {
+    const { error } = await (await storage()).from(SITE_BUCKET).upload(data.name, bytes, {
       contentType: data.contentType || "application/octet-stream",
       upsert: true, // re-uploading a name replaces it, so links never break
       cacheControl: "3600",
@@ -146,17 +123,16 @@ export const adminUploadAsset = createServerFn({ method: "POST" })
     if (error) throw new Error(`Upload failed: ${error.message}`);
 
     return {
-      name: path,
+      name: data.name,
       size: bytes.length,
       contentType: data.contentType,
       updatedAt: new Date().toISOString(),
-      url: publicUrl(path),
+      url: publicUrl(data.name),
     };
   });
 
 export const adminDeleteAsset = createServerFn({ method: "POST" })
-  // Slashes allowed here: a file inside a folder is addressed by its path.
-  .validator(z.object({ name: z.string().min(1).max(200) }))
+  .validator(z.object({ name: z.string().min(1).max(160) }))
   .handler(async ({ data }): Promise<{ ok: true }> => {
     const { requireAdmin } = await import("./admin-session");
     await requireAdmin();

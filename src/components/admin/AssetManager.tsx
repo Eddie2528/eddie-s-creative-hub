@@ -3,19 +3,7 @@ import { Check, Copy, Film, FileText, Trash2, Upload } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  adminDeleteAsset,
-  adminListAssets,
-  adminUploadAsset,
-  ASSET_FOLDERS,
-  type Asset,
-  type AssetFolder,
-} from "@/lib/admin-assets";
-
-// Files uploaded before folders existed live in the bucket root. Moving them
-// would break every stored reference, so they keep their place and get a group
-// of their own.
-const ROOT_GROUP = "Unsorted";
+import { adminDeleteAsset, adminListAssets, adminUploadAsset, type Asset } from "@/lib/admin-assets";
 
 // The file travels to the server as base64 inside the RPC, which inflates it by
 // a third — keep a ceiling well under the request limit.
@@ -56,7 +44,6 @@ export function AssetManager() {
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState<{ name: string; done: number; total: number } | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
-  const [folder, setFolder] = useState<AssetFolder | "">("works");
   const fileInput = useRef<HTMLInputElement>(null);
 
   async function load() {
@@ -91,7 +78,6 @@ export function AssetManager() {
         const uploaded = await adminUploadAsset({
           data: {
             name: safeName(file.name),
-            folder: folder || null,
             contentType: file.type,
             base64: await toBase64(file),
           },
@@ -132,35 +118,13 @@ export function AssetManager() {
 
   const totalSize = assets.reduce((sum, a) => sum + a.size, 0);
 
-  const grouped = [...ASSET_FOLDERS, ROOT_GROUP]
-    .map((group) => ({
-      group,
-      files: assets.filter((asset) =>
-        group === ROOT_GROUP ? !asset.name.includes("/") : asset.name.startsWith(`${group}/`),
-      ),
-    }))
-    .filter((section) => section.files.length > 0);
-
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">
           {assets.length} {assets.length === 1 ? "file" : "files"} · {formatSize(totalSize)}
         </p>
-        <div className="flex items-center gap-2">
-          <select
-            aria-label="Upload into"
-            value={folder}
-            onChange={(e) => setFolder(e.target.value as AssetFolder | "")}
-            className="h-9 rounded-md border border-input bg-background px-2 text-sm capitalize"
-          >
-            {ASSET_FOLDERS.map((name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
-            ))}
-            <option value="">No folder</option>
-          </select>
+        <div>
           <Input
             ref={fileInput}
             type="file"
@@ -190,55 +154,43 @@ export function AssetManager() {
           No files yet. Upload the CV, showreels and images here.
         </p>
       ) : (
-        <div className="space-y-6">
-          {grouped.map((section) => (
-            <section key={section.group} className="space-y-2">
-              <h3 className="hairline capitalize">
-                {section.group} · {section.files.length}
-              </h3>
-              <ul className="divide-y divide-border rounded-lg border border-border">
-                {section.files.map((asset) => (
-                  <li key={asset.name} className="flex flex-wrap items-center gap-3 px-4 py-3">
-                    {/* Filenames alone make it hard to tell one key visual from
-                        another; a still answers it at a glance. Videos have no
-                        thumbnail of their own, so they show their type instead. */}
-                    <div className="relative size-12 shrink-0 overflow-hidden rounded-sm bg-secondary">
-                      {(asset.contentType ?? "").startsWith("image/") ? (
-                        <img src={asset.url} alt="" loading="lazy" className="size-full object-cover" />
-                      ) : (
-                        <span className="flex size-full items-center justify-center">
-                          {(asset.contentType ?? "").startsWith("video/") ? (
-                            <Film className="size-5 text-muted-foreground" />
-                          ) : (
-                            <FileText className="size-5 text-muted-foreground" />
-                          )}
-                        </span>
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">
-                        {asset.name.includes("/") ? asset.name.split("/").pop() : asset.name}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatSize(asset.size)}
-                        {asset.contentType ? ` · ${asset.contentType}` : ""}
-                      </p>
-                    </div>
-                    <Button variant="outline" size="sm" onClick={() => void copyUrl(asset)}>
-                      {copied === asset.name ? <Check className="size-4" /> : <Copy className="size-4" />}
-                      {copied === asset.name ? "Copied" : "Copy URL"}
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => void remove(asset)}>
-                      <Trash2 className="size-4" />
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            </section>
+        <ul className="divide-y divide-border rounded-lg border border-border">
+          {assets.map((asset) => (
+            <li key={asset.name} className="flex flex-wrap items-center gap-3 px-4 py-3">
+              {/* Filenames alone make it hard to tell one key visual from
+                  another; a still answers it at a glance. Videos have no
+                  thumbnail of their own, so they show their type instead. */}
+              <div className="relative size-12 shrink-0 overflow-hidden rounded-sm bg-secondary">
+                {(asset.contentType ?? "").startsWith("image/") ? (
+                  <img src={asset.url} alt="" loading="lazy" className="size-full object-cover" />
+                ) : (
+                  <span className="flex size-full items-center justify-center">
+                    {(asset.contentType ?? "").startsWith("video/") ? (
+                      <Film className="size-5 text-muted-foreground" />
+                    ) : (
+                      <FileText className="size-5 text-muted-foreground" />
+                    )}
+                  </span>
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium">{asset.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {formatSize(asset.size)}
+                  {asset.contentType ? ` · ${asset.contentType}` : ""}
+                </p>
+              </div>
+              <Button variant="outline" size="sm" onClick={() => void copyUrl(asset)}>
+                {copied === asset.name ? <Check className="size-4" /> : <Copy className="size-4" />}
+                {copied === asset.name ? "Copied" : "Copy URL"}
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => void remove(asset)}>
+                <Trash2 className="size-4" />
+              </Button>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
-
     </div>
   );
 }

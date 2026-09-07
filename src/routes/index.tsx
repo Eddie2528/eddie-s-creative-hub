@@ -4,10 +4,11 @@ import { getCvUrl } from "@/lib/site-assets";
 import { getSiteContent, getSiteImages } from "@/lib/site-content";
 import { getCampaigns } from "@/lib/works";
 import { getRoles } from "@/lib/roles";
-import { ArrowUpRight, Download, Instagram, Linkedin, Mail } from "lucide-react";
+import { ArrowUpRight, Download, Mail } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { LeadDialog } from "@/components/site/LeadDialog";
+import { SocialLinks } from "@/components/site/SocialLinks";
 import { PhotoCarousel } from "@/components/site/PhotoCarousel";
 import { Works } from "@/components/site/Works";
 import { ExperienceMarquee, RoleList } from "@/components/site/Experience";
@@ -197,30 +198,7 @@ function Index() {
             {/* One row, one gap, one height: the round buttons use the same
                 size token as the wide ones so nothing sits a pixel proud. */}
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-              {content["social.instagram"] ? (
-                <Button asChild size="lg" variant="outline" className="size-10 rounded-full p-0">
-                  <a
-                    href={content["social.instagram"]}
-                    target="_blank"
-                    rel="noreferrer noopener"
-                    aria-label="Instagram"
-                  >
-                    <Instagram className="size-4" />
-                  </a>
-                </Button>
-              ) : null}
-              {content["social.linkedin"] ? (
-                <Button asChild size="lg" variant="outline" className="size-10 rounded-full p-0">
-                  <a
-                    href={content["social.linkedin"]}
-                    target="_blank"
-                    rel="noreferrer noopener"
-                    aria-label="LinkedIn"
-                  >
-                    <Linkedin className="size-4" />
-                  </a>
-                </Button>
-              ) : null}
+              <SocialLinks content={content} />
               <LeadDialog content={content}>
                 <Button size="lg" className="font-semibold">
                   {content["cta.primary"]}
@@ -246,7 +224,8 @@ function Index() {
       </footer>
 
       {/* Sticky lead button */}
-      <div className="fixed bottom-4 right-4 z-50 sm:bottom-6 sm:right-6 md:bottom-8 md:right-8">
+      <div className="fixed bottom-4 right-4 z-50 flex items-center gap-3 sm:bottom-6 sm:right-6 md:bottom-8 md:right-8">
+        <SocialLinks content={content} floating />
         <LeadDialog content={content}>
           <Button size="lg" className="rounded-full px-6 font-semibold shadow-lg">
             <Mail className="size-4" />

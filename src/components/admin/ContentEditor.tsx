@@ -178,6 +178,12 @@ export function ContentEditor({ onSessionExpired }: { onSessionExpired?: () => v
                     className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                   >
                     <option value="">Built-in photo</option>
+                    {/* If the file list didn't load, the stored name has no
+                        option to match and the box would show "Built-in photo"
+                        — reading as though the choice had been lost. */}
+                    {value && !images.some((image) => image.name === value) ? (
+                      <option value={value}>{value}</option>
+                    ) : null}
                     {images.map((image) => (
                       <option key={image.name} value={image.name}>
                         {image.name}
@@ -223,6 +229,9 @@ export function ContentEditor({ onSessionExpired }: { onSessionExpired?: () => v
                 className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
               >
                 <option value="">Built-in file</option>
+                {draft[field.key] && !docs.some((doc) => doc.name === draft[field.key]) ? (
+                  <option value={draft[field.key]}>{draft[field.key]}</option>
+                ) : null}
                 {docs.map((doc) => (
                   <option key={doc.name} value={doc.name}>
                     {doc.name}

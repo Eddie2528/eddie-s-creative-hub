@@ -333,6 +333,10 @@ export function WorksEditor({ onSessionExpired }: { onSessionExpired?: () => voi
                     className="h-9 min-w-0 flex-1 rounded-md border border-input bg-background px-2 text-xs"
                   >
                     <option value="">Default file</option>
+                    {work.assetName &&
+                    ![...videos, ...images].some((f) => f.name === work.assetName) ? (
+                      <option value={work.assetName}>{work.assetName}</option>
+                    ) : null}
                     {(work.kind === "video" ? videos : images).map((file) => (
                       <option key={file.name} value={file.name}>
                         {file.name}
@@ -357,6 +361,9 @@ export function WorksEditor({ onSessionExpired }: { onSessionExpired?: () => voi
                       className="h-9 min-w-0 flex-1 rounded-md border border-input bg-background px-2 text-xs"
                     >
                       <option value="">Default poster</option>
+                      {work.posterName && !images.some((f) => f.name === work.posterName) ? (
+                        <option value={work.posterName}>{work.posterName}</option>
+                      ) : null}
                       {images.map((file) => (
                         <option key={file.name} value={file.name}>
                           {file.name}

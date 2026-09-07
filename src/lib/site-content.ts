@@ -48,9 +48,9 @@ export const CONTENT_FIELDS: ContentField[] = [
   { key: "experience.kicker", section: "Experience", label: "Kicker line", value: "01 — Experience" },
   { key: "experience.heading", section: "Experience", label: "Heading", value: "Brands & teams I’ve worked with" },
 
-
-
+  { key: "works.kicker", section: "Works", label: "Kicker line", value: "02 — Selected works" },
   { key: "works.heading", section: "Works", label: "Heading", value: "Campaigns, brands & experiences" },
+  { key: "works.note", section: "Works", label: "Note under heading", value: "Click any piece to open it full size." },
 
   { key: "profile.kicker", section: "Profile", label: "Kicker line", value: "03 — Personal profile" },
   { key: "profile.heading", section: "Profile", label: "Heading", value: "Half maker, half dealmaker" },
@@ -84,7 +84,6 @@ export const CONTENT_FIELDS: ContentField[] = [
   { key: "cta.secondary", section: "Closing", label: "Secondary button", value: "Download my CV" },
   { key: "social.instagram", section: "Closing", label: "Instagram URL — blank hides the button", value: "https://www.instagram.com/eddie_uthaichalanon/" },
   { key: "social.linkedin", section: "Closing", label: "LinkedIn URL — blank hides the button", value: "https://www.linkedin.com/in/nakharin-uthaichalanon-a10909101/" },
-
 
   { key: "form.title", section: "Contact form", label: "Dialog heading", value: "Get in touch" },
   { key: "form.name.label", section: "Contact form", label: "Name — label", value: "Name / Company’s name" },
@@ -122,10 +121,6 @@ export const IMAGE_FIELDS: ImageField[] = [
   { key: "logo.cenergy-innovation", section: "Logos", label: "Cenergy Innovation" },
   { key: "logo.centerpoint-entertainment", section: "Logos", label: "CenterPoint Entertainment" },
 
-  { key: "works.moong-pattana-book", section: "Works", label: "Moong Pattana — Book for All Moms" },
-  { key: "works.the-mall-pet", section: "Works", label: "The Mall — Pet zone" },
-  { key: "works.the-mall-harbourland", section: "Works", label: "The Mall — Harbourland zone" },
-  { key: "works.ok-thin-kv", section: "Works", label: "OK Thin — Biscuit KV" },
 ];
 
 // Documents the back-office can point at, same idea as IMAGE_FIELDS: the value

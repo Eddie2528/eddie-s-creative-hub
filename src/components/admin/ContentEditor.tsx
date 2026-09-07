@@ -15,6 +15,7 @@ import {
   type SiteContent,
 } from "@/lib/site-content";
 import { adminListAssets, type Asset } from "@/lib/admin-assets";
+import { RolesEditor } from "@/components/admin/RolesEditor";
 
 const IMAGE_TYPES = /^image\//;
 
@@ -126,6 +127,8 @@ export function ContentEditor({ onSessionExpired }: { onSessionExpired?: () => v
           </div>
         </section>
       ))}
+
+      <RolesEditor onSessionExpired={onSessionExpired} />
 
       <section className="space-y-4">
         <div>

@@ -52,20 +52,14 @@ export function ExperienceMarquee({ images = {} }: { images?: ImageOverrides }) 
   );
 }
 
-const ROLE_COUNT = 7;
+import type { Role } from "@/lib/roles";
 
-export function RoleList({ content = {} }: { content?: Record<string, string> }) {
-  const roles = Array.from({ length: ROLE_COUNT }, (_, i) => ({
-    period: content[`role${i + 1}.period`] ?? "",
-    title: content[`role${i + 1}.title`] ?? "",
-    company: content[`role${i + 1}.company`] ?? "",
-  })).filter((role) => role.title || role.company);
-
+export function RoleList({ roles = [] }: { roles?: Role[] }) {
   return (
     <ul className="divide-y divide-border border-y border-border">
-      {roles.map((role, i) => (
+      {roles.map((role) => (
         <li
-          key={`${role.title}-${i}`}
+          key={role.id}
           className="grid gap-2 py-6 transition-colors hover:bg-card md:grid-cols-12 md:items-baseline md:gap-6 md:px-4"
         >
           {/* The years are blank until someone fills them in, so the column

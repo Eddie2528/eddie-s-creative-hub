@@ -61,3 +61,18 @@ export const adminSetLeadStatus = createServerFn({ method: "POST" })
     if (error) throw new Error(`Failed to update lead: ${error.message}`);
     return { ok: true };
   });
+
+// Deleting a lead throws away someone's enquiry for good, so it is deliberately
+// a single row at a time with the name shown before it happens.
+export const adminDeleteLead = createServerFn({ method: "POST" })
+  .validator(z.object({ id: z.string().uuid() }))
+  .handler(async ({ data }): Promise<{ ok: true }> => {
+    const { requireAdmin } = await import("./admin-session");
+    await requireAdmin();
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("leads").delete().eq("id", data.id);
+
+    if (error) throw new Error(`Couldn’t delete the lead — ${error.message}`);
+    return { ok: true };
+  });

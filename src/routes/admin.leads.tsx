@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { Download, LogOut, RefreshCw, Search } from "lucide-react";
+import { Download, LogOut, RefreshCw, Search, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import { AssetManager } from "@/components/admin/AssetManager";
 import { WorksEditor } from "@/components/admin/WorksEditor";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
+  adminDeleteLead,
   adminListLeads,
   adminSetLeadStatus,
   adminSignIn,
@@ -131,6 +132,23 @@ function AdminLeads() {
     } catch (cause) {
       console.error("Status update failed", cause);
       setLeads(previous);
+    }
+  }
+
+  async function removeLead(lead: Lead) {
+    if (!confirm(`Delete the enquiry from ${lead.name} (${lead.email})? This can't be undone.`)) {
+      return;
+    }
+    const previous = leads;
+    setLeads((current) => current.filter((l) => l.id !== lead.id));
+    setOpen(null);
+    try {
+      await adminDeleteLead({ data: { id: lead.id } });
+    } catch (cause) {
+      console.error("Deleting lead failed", cause);
+      setLeads(previous);
+      const message = cause instanceof Error ? cause.message : "Couldn't delete.";
+      if (message.startsWith(SESSION_EXPIRED)) handleExpired();
     }
   }
 
@@ -362,6 +380,11 @@ function AdminLeads() {
                   </dd>
                 </div>
               </dl>
+              <div className="mt-8 border-t border-border px-4 pt-4">
+                <Button variant="outline" size="sm" onClick={() => void removeLead(open)}>
+                  <Trash2 className="size-4" /> Delete this lead
+                </Button>
+              </div>
             </>
           ) : null}
         </SheetContent>

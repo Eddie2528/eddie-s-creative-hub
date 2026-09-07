@@ -202,17 +202,18 @@ function Index() {
                 // vanish into the page otherwise.
                 <div className="flex flex-wrap items-center gap-3 pt-2">
                   {universityLogos.map((src) => (
+                    // Both chips are the same box whatever shape the artwork
+                    // is, so neither degree looks weightier than the other;
+                    // object-contain fits each logo inside without cropping.
                     <span
                       key={src}
-                      className="flex h-20 items-center justify-center rounded-sm bg-white px-5"
+                      className="flex h-20 w-[clamp(11rem,26vw,14rem)] items-center justify-center rounded-sm bg-white px-5"
                     >
-                      {/* Room for a two-line lockup: these carry a Thai name
-                          above an English one, unreadable at logo-strip size. */}
                       <img
                         src={src}
                         alt="University"
                         loading="lazy"
-                        className="max-h-12 w-auto max-w-full object-contain"
+                        className="max-h-12 max-w-full object-contain"
                       />
                     </span>
                   ))}

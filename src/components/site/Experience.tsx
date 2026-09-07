@@ -53,11 +53,12 @@ export function RoleList({ roles = [] }: { roles?: Role[] }) {
         >
           {/* The years are blank until someone fills them in, so the column
               holds its width rather than letting the titles jump left. */}
-          {/* hairline sets its own colour, so the accent needs to win outright
-              rather than depend on which utility the stylesheet emits last. */}
-          <span className="hairline !text-primary md:col-span-3">{role.period || "—"}</span>
+          {/* hairline sets its own colour, so this has to win outright rather
+              than depend on which utility the stylesheet emits last. Lighter
+              than muted, short of the title's white. */}
+          <span className="hairline !text-foreground/80 md:col-span-3">{role.period || "—"}</span>
           <h3 className="display text-2xl md:col-span-5 md:text-3xl">{role.title}</h3>
-          <p className="text-sm text-primary md:col-span-4">{role.company}</p>
+          <p className="text-sm text-foreground/80 md:col-span-4">{role.company}</p>
         </li>
       ))}
     </ul>

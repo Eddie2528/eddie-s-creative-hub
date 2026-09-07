@@ -1,6 +1,7 @@
 # PRD — Eddie's Creative Hub
 
-Living spec for this project. Read this before making changes.
+Living spec for this project. Read this before making changes — and
+[HANDOFF.md](HANDOFF.md) for where things currently stand.
 
 ## 1. Product
 

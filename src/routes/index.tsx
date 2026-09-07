@@ -50,22 +50,38 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   const { cvUrl: CV_URL, content, images, campaigns, roles, logos } = Route.useLoaderData();
-  // An uploaded photo wins; otherwise the one bundled with the build.
-  const photo = (key: string, fallback: string) => images[key] ?? fallback;
-
   const heroSlots = [
     { key: "hero.photo1", fallback: eddie1, alt: "Portrait of Eddie Nakharin" },
     { key: "hero.photo2", fallback: eddie2, alt: "Eddie presenting brand strategy to a team" },
     { key: "hero.photo3", fallback: eddie3, alt: "Eddie on a rooftop in Bangkok at dusk" },
+    { key: "hero.photo4", fallback: null, alt: "Eddie Nakharin" },
+    { key: "hero.photo5", fallback: null, alt: "Eddie Nakharin" },
   ];
+  const profileSlots = [
+    { key: "profile.photo", fallback: eddie2, alt: "Eddie Nakharin leading a workshop" },
+    { key: "profile.photo2", fallback: null, alt: "Eddie Nakharin" },
+    { key: "profile.photo3", fallback: null, alt: "Eddie Nakharin" },
+    { key: "profile.photo4", fallback: null, alt: "Eddie Nakharin" },
+    { key: "profile.photo5", fallback: null, alt: "Eddie Nakharin" },
+  ];
+
   // Choosing one photo means one photo — the carousel drops its arrows, dots
   // and auto-advance on its own once it has nothing to advance to. Only when
-  // no slot has been set at all do all three built-in photos stand in.
-  const chosen = heroSlots.filter((slot) => images[slot.key]);
-  const heroPhotos = (chosen.length > 0 ? chosen : heroSlots).map((slot) => ({
-    src: images[slot.key] ?? slot.fallback,
-    alt: images[slot.key] ? "Eddie Nakharin" : slot.alt,
-  }));
+  // no slot has been set at all do the built-in photos stand in.
+  const gallery = (slots: { key: string; fallback: string | null; alt: string }[]) => {
+    const chosen = slots.filter((slot) => images[slot.key]);
+    const used = chosen.length > 0 ? chosen : slots.filter((slot) => slot.fallback);
+    return used.map((slot) => ({
+      src: images[slot.key] ?? (slot.fallback as string),
+      alt: images[slot.key] ? "Eddie Nakharin" : slot.alt,
+    }));
+  };
+
+  const heroPhotos = gallery(heroSlots);
+  const profilePhotos = gallery(profileSlots);
+  const universityLogos = ["education.logo1", "education.logo2"]
+    .map((key) => images[key])
+    .filter((src): src is string => Boolean(src));
 
   return (
     <div className="grain min-h-screen">
@@ -161,14 +177,7 @@ function Index() {
         <section id="profile" className="border-t border-border py-[clamp(3.5rem,9vw,6rem)]">
           <div className="mx-auto grid w-full max-w-6xl gap-10 px-[clamp(1rem,4vw,2.5rem)] md:grid-cols-12 md:items-center">
             <div className="md:col-span-5">
-              <img
-                src={photo("profile.photo", eddie2)}
-                alt="Eddie Nakharin leading a workshop"
-                width={1024}
-                height={1280}
-                loading="lazy"
-                className="aspect-[4/5] w-full rounded-sm object-cover"
-              />
+              <PhotoCarousel photos={profilePhotos} />
             </div>
             <div className="space-y-5 md:col-span-7">
               <p className="hairline">{content["profile.kicker"]}</p>
@@ -186,6 +195,27 @@ function Index() {
                   </div>
                 ))}
               </dl>
+
+              {universityLogos.length > 0 ? (
+                // Side by side under the numbers. On a light chip, like the
+                // agency logos: these arrive as dark marks on white and would
+                // vanish into the page otherwise.
+                <div className="flex flex-wrap items-center gap-3 pt-2">
+                  {universityLogos.map((src) => (
+                    <span
+                      key={src}
+                      className="flex h-14 items-center justify-center rounded-sm bg-white px-4"
+                    >
+                      <img
+                        src={src}
+                        alt="University"
+                        loading="lazy"
+                        className="max-h-8 w-auto max-w-full object-contain"
+                      />
+                    </span>
+                  ))}
+                </div>
+              ) : null}
             </div>
           </div>
         </section>

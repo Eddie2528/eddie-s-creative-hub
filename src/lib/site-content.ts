@@ -111,7 +111,18 @@ export const IMAGE_FIELDS: ImageField[] = [
   { key: "hero.photo1", section: "Hero", label: "Carousel photo 1" },
   { key: "hero.photo2", section: "Hero", label: "Carousel photo 2" },
   { key: "hero.photo3", section: "Hero", label: "Carousel photo 3" },
-  { key: "profile.photo", section: "Profile", label: "Profile photo" },
+  { key: "hero.photo4", section: "Hero", label: "Carousel photo 4" },
+  { key: "hero.photo5", section: "Hero", label: "Carousel photo 5" },
+
+  // The first keeps its original key so a photo already chosen stays chosen.
+  { key: "profile.photo", section: "Profile", label: "Carousel photo 1" },
+  { key: "profile.photo2", section: "Profile", label: "Carousel photo 2" },
+  { key: "profile.photo3", section: "Profile", label: "Carousel photo 3" },
+  { key: "profile.photo4", section: "Profile", label: "Carousel photo 4" },
+  { key: "profile.photo5", section: "Profile", label: "Carousel photo 5" },
+
+  { key: "education.logo1", section: "Profile", label: "University logo 1" },
+  { key: "education.logo2", section: "Profile", label: "University logo 2" },
 
 ];
 

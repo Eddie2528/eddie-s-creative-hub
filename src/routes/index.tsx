@@ -200,20 +200,20 @@ function Index() {
                 // Side by side under the numbers. On a light chip, like the
                 // agency logos: these arrive as dark marks on white and would
                 // vanish into the page otherwise.
-                <div className="flex flex-wrap items-center gap-3 pt-2">
+                <div className="grid grid-cols-2 gap-6 pt-2">
+                  {/* Two columns across the same width as the stats above, so
+                      the chips line up with the copy rather than floating at
+                      whatever width their artwork happens to be. */}
                   {universityLogos.map((src) => (
-                    // Both chips are the same box whatever shape the artwork
-                    // is, so neither degree looks weightier than the other;
-                    // object-contain fits each logo inside without cropping.
                     <span
                       key={src}
-                      className="flex h-20 w-[clamp(11rem,26vw,14rem)] items-center justify-center rounded-sm bg-white px-5"
+                      className="flex h-24 items-center justify-center rounded-sm bg-white px-3"
                     >
                       <img
                         src={src}
                         alt="University"
                         loading="lazy"
-                        className="max-h-12 max-w-full object-contain"
+                        className="max-h-[4.5rem] max-w-full object-contain"
                       />
                     </span>
                   ))}

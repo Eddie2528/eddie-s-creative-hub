@@ -109,6 +109,23 @@ blacks; the key visuals were converted with Pillow using relative colorimetric
 and *no* black point compensation, which preserves a lit studio backdrop instead
 of mapping it to black.
 
+**The security scan's storage finding is a false positive.** It reports
+"Public storage bucket allows unrestricted file uploads and deletions" because
+`storage.objects` carries no RLS policies — and reads that as unrestricted. It's
+the opposite: RLS is enabled (`relrowsecurity = true`) with zero policies, which
+in PostgreSQL denies every operation to `anon` and `authenticated`. Uploads work
+because server functions hold the service role, which bypasses RLS, and public
+reads go through the public object endpoint, which doesn't consult it. Adding
+policies to "fix" this would *open* what is currently shut. Verify with:
+
+```sql
+select relrowsecurity from pg_class where oid = 'storage.objects'::regclass;
+select policyname, cmd, roles from pg_policies
+where schemaname = 'storage' and tablename = 'objects';
+```
+
+Expected: `true`, and no rows.
+
 **The marquee needs exactly two copies of the logo set.** The animation travels
 -50%; three copies land the loop mid-set and the strip visibly snaps.
 

@@ -135,11 +135,21 @@ export const CONTENT_DEFAULTS: SiteContent = Object.fromEntries(
   CONTENT_FIELDS.map((field) => [field.key, field.value]),
 );
 
-// Stored rows win, but only for keys still in CONTENT_FIELDS: a row left behind
-// by a renamed or deleted field is ignored rather than resurrecting old copy.
+// Stored rows win, but only for keys the site still knows about: a row left
+// behind by a renamed or deleted field is ignored rather than resurrecting old
+// copy.
+//
+// Photo and document choices come through too. They have no default — an unset
+// one means "the file bundled with the build" — but the back-office reads the
+// form from here, and leaving them out made every picker read "Built-in photo"
+// however it had been set.
 export function mergeContent(stored: SiteContent): SiteContent {
   const merged = { ...CONTENT_DEFAULTS };
   for (const field of CONTENT_FIELDS) {
+    const value = stored[field.key];
+    if (typeof value === "string" && value.length > 0) merged[field.key] = value;
+  }
+  for (const field of [...IMAGE_FIELDS, ...FILE_FIELDS]) {
     const value = stored[field.key];
     if (typeof value === "string" && value.length > 0) merged[field.key] = value;
   }

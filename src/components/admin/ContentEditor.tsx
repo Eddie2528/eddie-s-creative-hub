@@ -29,20 +29,16 @@ export function ContentEditor({ onSessionExpired }: { onSessionExpired?: () => v
   const [error, setError] = useState<string | null>(null);
   const [justSaved, setJustSaved] = useState(false);
   const [images, setImages] = useState<Asset[]>([]);
+  const [assetsError, setAssetsError] = useState(false);
   const [docs, setDocs] = useState<Asset[]>([]);
 
   useEffect(() => {
     void (async () => {
       try {
-        const [content, assets] = await Promise.all([
-          getSiteContent(),
-          // The picker only offers files already uploaded — no typing paths.
-          adminListAssets().catch(() => [] as Asset[]),
-        ]);
+        const content = await getSiteContent();
         setSaved(content);
         setDraft(content);
-        setImages(assets.filter((a) => IMAGE_TYPES.test(a.contentType ?? "")));
-        setDocs(assets.filter((a) => !IMAGE_TYPES.test(a.contentType ?? "") && !/^video\//.test(a.contentType ?? "")));
+        await loadAssets();
       } catch (cause) {
         console.error("Loading content failed", cause);
         setError("Couldn't load the current text.");
@@ -51,6 +47,25 @@ export function ContentEditor({ onSessionExpired }: { onSessionExpired?: () => v
       }
     })();
   }, []);
+
+  // Separate from the content load so a failure is visible and retryable: the
+  // picker only offers files already uploaded, and an empty list is otherwise
+  // indistinguishable from having uploaded none.
+  async function loadAssets() {
+    try {
+      const assets = await adminListAssets();
+      setImages(assets.filter((a) => IMAGE_TYPES.test(a.contentType ?? "")));
+      setDocs(
+        assets.filter(
+          (a) => !IMAGE_TYPES.test(a.contentType ?? "") && !/^video\//.test(a.contentType ?? ""),
+        ),
+      );
+      setAssetsError(false);
+    } catch (cause) {
+      console.error("Loading files failed", cause);
+      setAssetsError(true);
+    }
+  }
 
   // Only what actually changed goes to the server, so saving can't quietly
   // write a stale value over an edit made somewhere else.
@@ -174,7 +189,16 @@ export function ContentEditor({ onSessionExpired }: { onSessionExpired?: () => v
             );
           })}
         </div>
-        {images.length === 0 ? (
+        {assetsError ? (
+          <div className="flex flex-wrap items-center gap-3 rounded-lg border border-destructive/50 p-3">
+            <p role="alert" className="flex-1 text-sm text-destructive">
+              Couldn’t load your uploaded files. If you were signed out, sign in again first.
+            </p>
+            <Button variant="outline" size="sm" onClick={() => void loadAssets()}>
+              Reload files
+            </Button>
+          </div>
+        ) : images.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             No images uploaded yet — add some in the Files tab.
           </p>

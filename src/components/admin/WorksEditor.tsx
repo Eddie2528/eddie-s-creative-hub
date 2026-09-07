@@ -29,19 +29,15 @@ export function WorksEditor({ onSessionExpired }: { onSessionExpired?: () => voi
   const [justSaved, setJustSaved] = useState(false);
   const [videos, setVideos] = useState<Asset[]>([]);
   const [images, setImages] = useState<Asset[]>([]);
+  const [assetsError, setAssetsError] = useState(false);
   const [dragging, setDragging] = useState<number | null>(null);
   const [dropTarget, setDropTarget] = useState<number | null>(null);
 
   useEffect(() => {
     void (async () => {
       try {
-        const [list, assets] = await Promise.all([
-          adminListCampaigns(),
-          adminListAssets().catch(() => [] as Asset[]),
-        ]);
-        setCampaigns(list);
-        setVideos(assets.filter((a) => (a.contentType ?? "").startsWith("video/")));
-        setImages(assets.filter((a) => (a.contentType ?? "").startsWith("image/")));
+        setCampaigns(await adminListCampaigns());
+        await loadAssets();
       } catch (cause) {
         console.error("Loading works failed", cause);
         setError("Couldn't load the works list.");
@@ -50,6 +46,21 @@ export function WorksEditor({ onSessionExpired }: { onSessionExpired?: () => voi
       }
     })();
   }, []);
+
+  // Kept apart from the campaign load so a failure here is visible and can be
+  // retried: an empty file list looks identical to having uploaded nothing,
+  // and silently swallowing the error left no way to tell the difference.
+  async function loadAssets() {
+    try {
+      const assets = await adminListAssets();
+      setVideos(assets.filter((a) => (a.contentType ?? "").startsWith("video/")));
+      setImages(assets.filter((a) => (a.contentType ?? "").startsWith("image/")));
+      setAssetsError(false);
+    } catch (cause) {
+      console.error("Loading files failed", cause);
+      setAssetsError(true);
+    }
+  }
 
   function update(campaignName: string, updater: (works: Work[]) => Work[]) {
     setCampaigns((current) =>
@@ -189,6 +200,18 @@ export function WorksEditor({ onSessionExpired }: { onSessionExpired?: () => voi
 
   return (
     <div className="space-y-8 pb-28">
+      {assetsError ? (
+        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-destructive/50 p-3">
+          <p role="alert" className="flex-1 text-sm text-destructive">
+            Couldn’t load your uploaded files, so the file dropdowns are empty. If you were signed
+            out, sign in again first.
+          </p>
+          <Button variant="outline" size="sm" onClick={() => void loadAssets()}>
+            Reload files
+          </Button>
+        </div>
+      ) : null}
+
       <p className="text-sm text-muted-foreground">
         Campaigns and the pieces inside them appear on the site in this order. Drag a campaign by
         its handle, or use the chevrons — dragging needs a mouse, the chevrons work anywhere. The

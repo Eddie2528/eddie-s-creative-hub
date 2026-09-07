@@ -185,12 +185,18 @@ function Index() {
               <h2 className="display text-[clamp(2rem,6vw,3.5rem)]">{content["profile.heading"]}</h2>
               <p className="text-muted-foreground">{content["profile.para1"]}</p>
               <p className="text-muted-foreground">{content["profile.para2"]}</p>
-              <dl className="grid grid-cols-2 gap-6 pt-4 sm:grid-cols-4">
+              {/* Four across only once there's room for them. At tablet width four
+                  columns left 88px a cell, which is narrower than a single
+                  tracked-out word like ADVERTISING. */}
+              <dl className="grid grid-cols-2 gap-6 pt-4 lg:grid-cols-4">
                 {[1, 2, 3, 4].map((n) => [
                   content[`profile.stat${n}.value`],
                   content[`profile.stat${n}.label`],
                 ]).map(([value, label]) => (
-                  <div key={label}>
+                  // Grid items default to min-width:auto, which stops them
+                  // shrinking below their content and is what let the label
+                  // push past its column in the first place.
+                  <div key={label} className="min-w-0">
                     <dt className="display text-3xl text-primary">{value}</dt>
                     <dd className="hairline mt-1">{label}</dd>
                   </div>

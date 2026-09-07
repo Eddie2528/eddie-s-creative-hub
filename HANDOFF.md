@@ -126,6 +126,15 @@ where schemaname = 'storage' and tablename = 'objects';
 
 Expected: `true`, and no rows.
 
+**Tracked-out labels overflow their column before they wrap.** `hairline` adds
+0.28em of letter-spacing, so a label is far wider than it looks — and a token
+like `DESIGN/PR/EVENT` has no space to break at, since slashes aren't break
+opportunities. It overflowed onto the next column on iPad. Fixed by wrapping
+(`overflow-wrap: break-word` on `hairline`, `break-word` globally), by letting
+grid cells shrink (`min-w-0` — grid items default to `min-width: auto`), and by
+holding the stats at two columns until `lg`. Check new labels at 375, 768, 820
+and 1440.
+
 **The marquee needs exactly two copies of the logo set.** The animation travels
 -50%; three copies land the loop mid-set and the strip visibly snaps.
 

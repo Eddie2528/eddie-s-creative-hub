@@ -85,11 +85,25 @@
   text-transform: uppercase;
 }
 
+/* A long unbroken token — a URL, a slashed label, a Thai string with no
+   spaces — should wrap rather than push its container wide or spill over a
+   neighbour. break-word only kicks in when the word genuinely doesn't fit, so
+   ordinary text still breaks at spaces. */
+body {
+  overflow-wrap: break-word;
+}
+
 @utility hairline {
   font-size: 0.7rem;
   letter-spacing: 0.28em;
   text-transform: uppercase;
   color: var(--muted-foreground);
+  /* The wide tracking makes a long token far wider than its column, and a
+     label like DESIGN/PR/EVENT has no space to break at — slashes aren't
+     break opportunities. break-word keeps normal word wrapping and only
+     splits a word when that word alone can't fit, so labels break at their
+     spaces first and mid-word only as a last resort. */
+  overflow-wrap: break-word;
 }
 
 @utility grain {

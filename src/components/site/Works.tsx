@@ -23,7 +23,12 @@ export function Works({ campaigns = [] }: { campaigns?: Campaign[] }) {
       <div className="space-y-[clamp(2.5rem,6vw,4rem)]">
         {campaigns.map((campaign) => (
           <section key={campaign.name}>
-            <h3 className="hairline border-b border-border pb-3">{campaign.name}</h3>
+            {/* The campaign is the heading for the pieces under it, so it
+                carries the display face and the accent colour rather than the
+                muted micro-label the section kickers use. */}
+            <h3 className="display border-b border-border pb-3 text-[clamp(1.4rem,3.5vw,2.1rem)] uppercase tracking-wide text-primary">
+              {campaign.name}
+            </h3>
             {/* One ratio across the grid keeps the rows aligned however the
                 artwork arrives; opening a piece shows it uncropped. */}
             <div className="mt-5 grid gap-[clamp(0.75rem,2vw,1.25rem)] sm:grid-cols-2 lg:grid-cols-3">

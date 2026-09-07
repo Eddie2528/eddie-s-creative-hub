@@ -23,10 +23,10 @@ export function Works({ campaigns = [] }: { campaigns?: Campaign[] }) {
       <div className="space-y-[clamp(2.5rem,6vw,4rem)]">
         {campaigns.map((campaign) => (
           <section key={campaign.name}>
-            {/* The campaign is the heading for the pieces under it, so it
-                carries the display face and the accent colour rather than the
-                muted micro-label the section kickers use. */}
-            <h3 className="display border-b border-border pb-3 text-[clamp(1.4rem,3.5vw,2.1rem)] uppercase tracking-wide text-primary">
+            {/* Same micro-label shape as the section kickers, a size up and in
+                the accent colour: enough to mark which client the pieces below
+                belong to without competing with their titles. */}
+            <h3 className="border-b border-border pb-3 text-[clamp(0.9rem,1.4vw,1.05rem)] font-normal uppercase tracking-[0.2em] text-primary">
               {campaign.name}
             </h3>
             {/* One ratio across the grid keeps the rows aligned however the

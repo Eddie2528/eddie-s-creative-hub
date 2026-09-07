@@ -113,14 +113,6 @@ export const IMAGE_FIELDS: ImageField[] = [
   { key: "hero.photo3", section: "Hero", label: "Carousel photo 3" },
   { key: "profile.photo", section: "Profile", label: "Profile photo" },
 
-  { key: "logo.v-and", section: "Logos", label: "V&" },
-  { key: "logo.ogilvy", section: "Logos", label: "Ogilvy" },
-  { key: "logo.spicy-hakuhodo", section: "Logos", label: "Spicy Hakuhodo" },
-  { key: "logo.cj-worx", section: "Logos", label: "CJ Worx" },
-  { key: "logo.delphys-hakuhodo", section: "Logos", label: "Delphys Hakuhodo" },
-  { key: "logo.cenergy-innovation", section: "Logos", label: "Cenergy Innovation" },
-  { key: "logo.centerpoint-entertainment", section: "Logos", label: "CenterPoint Entertainment" },
-
 ];
 
 // Documents the back-office can point at, same idea as IMAGE_FIELDS: the value

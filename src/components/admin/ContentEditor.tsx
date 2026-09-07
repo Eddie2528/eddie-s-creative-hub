@@ -16,6 +16,7 @@ import {
 } from "@/lib/site-content";
 import { adminListAssets, type Asset } from "@/lib/admin-assets";
 import { RolesEditor } from "@/components/admin/RolesEditor";
+import { LogosEditor } from "@/components/admin/LogosEditor";
 
 const IMAGE_TYPES = /^image\//;
 
@@ -144,6 +145,8 @@ export function ContentEditor({ onSessionExpired }: { onSessionExpired?: () => v
       ))}
 
       <RolesEditor onSessionExpired={onSessionExpired} />
+
+      <LogosEditor onSessionExpired={onSessionExpired} />
 
       <section className="space-y-4">
         <div>

@@ -4,6 +4,7 @@ import { getCvUrl } from "@/lib/site-assets";
 import { getSiteContent, getSiteImages } from "@/lib/site-content";
 import { getCampaigns } from "@/lib/works";
 import { getRoles } from "@/lib/roles";
+import { getLogos } from "@/lib/logos";
 import { ArrowUpRight, Download, Mail } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -42,12 +43,13 @@ export const Route = createFileRoute("/")({
     images: await getSiteImages(),
     campaigns: await getCampaigns(),
     roles: await getRoles(),
+    logos: await getLogos(),
   }),
   component: Index,
 });
 
 function Index() {
-  const { cvUrl: CV_URL, content, images, campaigns, roles } = Route.useLoaderData();
+  const { cvUrl: CV_URL, content, images, campaigns, roles, logos } = Route.useLoaderData();
   // An uploaded photo wins; otherwise the one bundled with the build.
   const photo = (key: string, fallback: string) => images[key] ?? fallback;
 
@@ -136,7 +138,7 @@ function Index() {
             <h2 className="display mt-4 text-[clamp(1.9rem,6vw,4rem)]">{content["experience.heading"]}</h2>
           </div>
           <div className="mt-10">
-            <ExperienceMarquee images={images} />
+            <ExperienceMarquee logos={logos} />
           </div>
           <div className="mx-auto mt-14 w-full max-w-6xl px-[clamp(1rem,4vw,2.5rem)]">
             <RoleList roles={roles} />

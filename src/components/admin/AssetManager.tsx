@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Check, Copy, Trash2, Upload } from "lucide-react";
+import { Check, Copy, Film, FileText, Trash2, Upload } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -157,6 +157,22 @@ export function AssetManager() {
         <ul className="divide-y divide-border rounded-lg border border-border">
           {assets.map((asset) => (
             <li key={asset.name} className="flex flex-wrap items-center gap-3 px-4 py-3">
+              {/* Filenames alone make it hard to tell one key visual from
+                  another; a still answers it at a glance. Videos have no
+                  thumbnail of their own, so they show their type instead. */}
+              <div className="relative size-12 shrink-0 overflow-hidden rounded-sm bg-secondary">
+                {(asset.contentType ?? "").startsWith("image/") ? (
+                  <img src={asset.url} alt="" loading="lazy" className="size-full object-cover" />
+                ) : (
+                  <span className="flex size-full items-center justify-center">
+                    {(asset.contentType ?? "").startsWith("video/") ? (
+                      <Film className="size-5 text-muted-foreground" />
+                    ) : (
+                      <FileText className="size-5 text-muted-foreground" />
+                    )}
+                  </span>
+                )}
+              </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">{asset.name}</p>
                 <p className="text-xs text-muted-foreground">

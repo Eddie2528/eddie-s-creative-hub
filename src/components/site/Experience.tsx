@@ -1,22 +1,5 @@
-import vAnd from "@/assets/logos/v-and.png";
-import ogilvy from "@/assets/logos/ogilvy.png";
-import spicyHakuhodo from "@/assets/logos/spicy-hakuhodo.png";
-import cjWorx from "@/assets/logos/cj-worx.png";
-import delphysHakuhodo from "@/assets/logos/delphys-hakuhodo.png";
-import cenergy from "@/assets/logos/cenergy-innovation.png";
-import centerpoint from "@/assets/logos/centerpoint-entertainment.png";
-
-const companies = [
-  { id: "v-and", name: "V&", logo: vAnd },
-  { id: "ogilvy", name: "Ogilvy", logo: ogilvy },
-  { id: "spicy-hakuhodo", name: "Spicy Hakuhodo", logo: spicyHakuhodo },
-  { id: "cj-worx", name: "CJ Worx", logo: cjWorx },
-  { id: "delphys-hakuhodo", name: "Delphys Hakuhodo", logo: delphysHakuhodo },
-  { id: "cenergy-innovation", name: "Cenergy Innovation", logo: cenergy },
-  { id: "centerpoint-entertainment", name: "CenterPoint Entertainment", logo: centerpoint },
-];
-
-export type ImageOverrides = Record<string, string>;
+import type { ResolvedLogo } from "@/lib/logos";
+import { resolveLogo } from "@/lib/bundled-logos";
 
 // Logos sit on a light chip rather than the page's dark card: they arrive in
 // their own brand colours, and one of them has no transparency at all, so a
@@ -34,16 +17,12 @@ function LogoTile({ name, logo }: { name: string; logo: string }) {
   );
 }
 
-export function ExperienceMarquee({ images = {} }: { images?: ImageOverrides }) {
+export function ExperienceMarquee({ logos = [] }: { logos?: ResolvedLogo[] }) {
   return (
     <div className="relative overflow-hidden py-2">
       <div className="marquee-track">
-        {[...companies, ...companies, ...companies].map((company, i) => (
-          <LogoTile
-            key={`${company.id}-${i}`}
-            name={company.name}
-            logo={images[`logo.${company.id}`] ?? company.logo}
-          />
+        {[...logos, ...logos, ...logos].map((logo, i) => (
+          <LogoTile key={`${logo.id}-${i}`} name={logo.name} logo={resolveLogo(logo.src) ?? ""} />
         ))}
       </div>
       <div className="pointer-events-none absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-background to-transparent" />

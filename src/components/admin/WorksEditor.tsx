@@ -138,8 +138,9 @@ export function WorksEditor({ onSessionExpired }: { onSessionExpired?: () => voi
         },
       });
       setDirty(false);
+      // Stays until the next edit: a message that disappears leaves "No
+      // changes" on screen, which reads as though nothing was saved.
       setJustSaved(true);
-      setTimeout(() => setJustSaved(false), 2500);
     } catch (cause) {
       console.error("Saving works failed", cause);
       // Pass the server's own words through: "relation does not exist" tells
@@ -237,7 +238,12 @@ export function WorksEditor({ onSessionExpired }: { onSessionExpired?: () => voi
           <div className="flex items-center gap-2">
             <span
               draggable
-              onDragStart={() => setDragging(campaignIndex)}
+              onDragStart={(e) => {
+                // Chrome won't start a drag unless the event carries data.
+                e.dataTransfer.setData("text/plain", campaign.name);
+                e.dataTransfer.effectAllowed = "move";
+                setDragging(campaignIndex);
+              }}
               onDragEnd={() => {
                 setDragging(null);
                 setDropTarget(null);
@@ -310,13 +316,20 @@ export function WorksEditor({ onSessionExpired }: { onSessionExpired?: () => voi
                   <select
                     aria-label={`${work.id} file`}
                     value={work.assetName ?? ""}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      const name = e.target.value || null;
+                      // Carry the chosen file's URL across too, so the
+                      // thumbnail changes with the dropdown instead of staying
+                      // blank until the next reload.
+                      const picked = [...videos, ...images].find((f) => f.name === name);
                       update(campaign.name, (works) =>
                         works.map((w) =>
-                          w.id === work.id ? { ...w, assetName: e.target.value || null } : w,
+                          w.id === work.id
+                            ? { ...w, assetName: name, asset: picked?.url ?? w.asset }
+                            : w,
                         ),
-                      )
-                    }
+                      );
+                    }}
                     className="h-9 min-w-0 flex-1 rounded-md border border-input bg-background px-2 text-xs"
                   >
                     <option value="">Default file</option>
@@ -330,13 +343,17 @@ export function WorksEditor({ onSessionExpired }: { onSessionExpired?: () => voi
                     <select
                       aria-label={`${work.id} poster`}
                       value={work.posterName ?? ""}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        const name = e.target.value || null;
+                        const picked = images.find((f) => f.name === name);
                         update(campaign.name, (works) =>
                           works.map((w) =>
-                            w.id === work.id ? { ...w, posterName: e.target.value || null } : w,
+                            w.id === work.id
+                              ? { ...w, posterName: name, poster: picked?.url ?? w.poster }
+                              : w,
                           ),
-                        )
-                      }
+                        );
+                      }}
                       className="h-9 min-w-0 flex-1 rounded-md border border-input bg-background px-2 text-xs"
                     >
                       <option value="">Default poster</option>
@@ -416,10 +433,10 @@ export function WorksEditor({ onSessionExpired }: { onSessionExpired?: () => voi
               <span role="alert" className="text-destructive">
                 {error}
               </span>
-            ) : justSaved ? (
-              "Saved. Publish in Lovable to put it live."
             ) : dirty ? (
               "Unsaved changes"
+            ) : justSaved ? (
+              "Saved. Publish in Lovable to put it live."
             ) : (
               "No changes"
             )}

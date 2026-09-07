@@ -204,13 +204,15 @@ function Index() {
                   {universityLogos.map((src) => (
                     <span
                       key={src}
-                      className="flex h-14 items-center justify-center rounded-sm bg-white px-4"
+                      className="flex h-20 items-center justify-center rounded-sm bg-white px-5"
                     >
+                      {/* Room for a two-line lockup: these carry a Thai name
+                          above an English one, unreadable at logo-strip size. */}
                       <img
                         src={src}
                         alt="University"
                         loading="lazy"
-                        className="max-h-8 w-auto max-w-full object-contain"
+                        className="max-h-12 w-auto max-w-full object-contain"
                       />
                     </span>
                   ))}

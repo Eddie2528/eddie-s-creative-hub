@@ -1,4 +1,5 @@
 import type { ResolvedLogo } from "@/lib/logos";
+import type { Role } from "@/lib/roles";
 import { resolveLogo } from "@/lib/bundled-logos";
 
 // Logos sit on a light chip rather than the page's dark card: they arrive in
@@ -6,7 +7,7 @@ import { resolveLogo } from "@/lib/bundled-logos";
 // dark tile would swallow some and box others in white.
 function LogoTile({ name, logo }: { name: string; logo: string }) {
   return (
-    <div className="mx-2 flex h-20 w-[clamp(10rem,30vw,13rem)] shrink-0 items-center justify-center rounded-sm border border-border bg-white px-6 transition-colors hover:border-primary">
+    <div className="flex h-20 w-[clamp(9rem,22vw,11.5rem)] items-center justify-center rounded-sm border border-border bg-white px-5 transition-colors hover:border-primary">
       <img
         src={logo}
         alt={name}
@@ -18,20 +19,17 @@ function LogoTile({ name, logo }: { name: string; logo: string }) {
 }
 
 export function ExperienceMarquee({ logos = [] }: { logos?: ResolvedLogo[] }) {
+  // A static row, one tile per logo. It used to scroll, which meant repeating
+  // the set three times to keep the track full — and the repeats read as
+  // duplicates rather than as motion.
   return (
-    <div className="relative overflow-hidden py-2">
-      <div className="marquee-track">
-        {[...logos, ...logos, ...logos].map((logo, i) => (
-          <LogoTile key={`${logo.id}-${i}`} name={logo.name} logo={resolveLogo(logo.src) ?? ""} />
-        ))}
-      </div>
-      <div className="pointer-events-none absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-background to-transparent" />
-      <div className="pointer-events-none absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-background to-transparent" />
+    <div className="mx-auto flex w-full max-w-6xl flex-wrap justify-center gap-3 px-[clamp(1rem,4vw,2.5rem)]">
+      {logos.map((logo) => (
+        <LogoTile key={logo.id} name={logo.name} logo={resolveLogo(logo.src) ?? ""} />
+      ))}
     </div>
   );
 }
-
-import type { Role } from "@/lib/roles";
 
 export function RoleList({ roles = [] }: { roles?: Role[] }) {
   return (

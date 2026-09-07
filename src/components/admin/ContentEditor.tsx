@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
+import { SESSION_EXPIRED } from "@/routes/admin.leads";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,7 +20,7 @@ const IMAGE_TYPES = /^image\//;
 
 const SECTIONS = [...new Set(CONTENT_FIELDS.map((field) => field.section))];
 
-export function ContentEditor() {
+export function ContentEditor({ onSessionExpired }: { onSessionExpired?: () => void } = {}) {
   const [saved, setSaved] = useState<SiteContent>(CONTENT_DEFAULTS);
   const [draft, setDraft] = useState<SiteContent>(CONTENT_DEFAULTS);
   const [loading, setLoading] = useState(true);
@@ -78,7 +79,9 @@ export function ContentEditor() {
       setTimeout(() => setJustSaved(false), 2500);
     } catch (cause) {
       console.error("Saving content failed", cause);
-      setError(cause instanceof Error ? cause.message : "Couldn't save — try again.");
+      const message = cause instanceof Error ? cause.message : "Couldn't save — try again.";
+      if (message.startsWith(SESSION_EXPIRED)) onSessionExpired?.();
+      setError(message);
     } finally {
       setSaving(false);
     }

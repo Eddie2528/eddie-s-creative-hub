@@ -8,7 +8,9 @@ const TTL_MS = 12 * 60 * 60 * 1000;
 
 export class NotAuthorized extends Error {
   constructor() {
-    super("Not authorized");
+    // Read by the back-office to tell an expired session apart from a real
+    // failure, so don't reword it without updating SESSION_EXPIRED there.
+    super("Your session has expired — sign in again to save.");
   }
 }
 

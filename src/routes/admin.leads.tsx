@@ -58,6 +58,10 @@ function toCsv(leads: Lead[]) {
   ].join("\n");
 }
 
+// Matched against a failed save so an expired session shows the sign-in form
+// rather than a message the reader can do nothing with.
+export const SESSION_EXPIRED = "Your session has expired";
+
 function AdminLeads() {
   const [authed, setAuthed] = useState(false);
   const [password, setPassword] = useState("");
@@ -69,6 +73,12 @@ function AdminLeads() {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<LeadStatus | "all">("all");
   const [open, setOpen] = useState<Lead | null>(null);
+  const [expired, setExpired] = useState(false);
+
+  function handleExpired() {
+    setExpired(true);
+    setAuthed(false);
+  }
 
   async function load() {
     setLoading(true);
@@ -155,7 +165,11 @@ function AdminLeads() {
         <form onSubmit={handleSignIn} className="w-full max-w-sm space-y-4">
           <div>
             <h1 className="display text-3xl">Back-office</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Enter the admin password to continue.</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {expired
+                ? "Your session expired. Sign in again — anything you were editing in another tab is still there, and saving will work once you're back in."
+                : "Enter the admin password to continue."}
+            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="admin-password">Password</Label>
@@ -220,7 +234,7 @@ function AdminLeads() {
         </TabsList>
 
         <TabsContent value="works" className="mt-6">
-          <WorksEditor />
+          <WorksEditor onSessionExpired={handleExpired} />
         </TabsContent>
 
         <TabsContent value="files" className="mt-6">
@@ -228,7 +242,7 @@ function AdminLeads() {
         </TabsContent>
 
         <TabsContent value="content" className="mt-6">
-          <ContentEditor />
+          <ContentEditor onSessionExpired={handleExpired} />
         </TabsContent>
 
         <TabsContent value="leads">

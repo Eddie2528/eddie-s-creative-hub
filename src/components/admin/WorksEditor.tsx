@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, Eye, EyeOff, GripVertical, Play, Plus, Trash2 } from "lucide-react";
 
+import { SESSION_EXPIRED } from "@/routes/admin.leads";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -19,7 +20,7 @@ function thumb(work: Work): string | null {
   return resolveBundled(work.kind === "video" ? work.poster : work.asset);
 }
 
-export function WorksEditor() {
+export function WorksEditor({ onSessionExpired }: { onSessionExpired?: () => void } = {}) {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -132,7 +133,9 @@ export function WorksEditor() {
       console.error("Saving works failed", cause);
       // Pass the server's own words through: "relation does not exist" tells
       // you a migration hasn't been run, which "try again" never would.
-      setError(cause instanceof Error ? cause.message : "Couldn't save — try again.");
+      const message = cause instanceof Error ? cause.message : "Couldn't save — try again.";
+      if (message.startsWith(SESSION_EXPIRED)) onSessionExpired?.();
+      setError(message);
     } finally {
       setSaving(false);
     }

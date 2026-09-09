@@ -33,22 +33,16 @@ first and the migrations second.
 
 ## Still to do
 
-- **Delete the test leads.** Everything on `@test.com`, left over from building
-  the form, the notifications and the attachment upload. The Leads tab ticks
-  and deletes them in one go — search `test`, tick the header, Delete.
-- **Rotate the secrets that have been seen.** The Telegram bot token was once
-  visible in a screenshot, and `ADMIN_PASSWORD` is still a guessable phrase
-  built from a name and a former employer. Both change in Cloud → Secrets and
-  need a publish.
-- **A domain of its own** is the one change left that would move the needle:
-  it replaces the `.lovable.app` link on the CV, it is what removes the "Edit
-  with Lovable" badge, and verifying it in Resend lets the notification email
-  come from Eddie rather than `onboarding@resend.dev`.
+Nothing is outstanding. The test leads are gone, and both secrets that had
+been seen — the Telegram bot token and `ADMIN_PASSWORD` — were rotated on
+9 September 2026.
 
-Everything else that used to live here is done: the university logos, the
-phone number, Telegram and Resend notifications, and migration 0007 — the
-attachment path was tested end to end on 9 September 2026, upload through to
-download from the back-office.
+**A domain of its own** is the one change left that would move the needle, and
+it is deliberately deferred rather than forgotten: it would replace the
+`.lovable.app` link on the CV, it is what removes the "Edit with Lovable"
+badge, and verifying it in Resend would let the notification email come from
+Eddie rather than `onboarding@resend.dev`. Revisit it when the link starts
+going to people who matter.
 
 ## Telling Eddie a lead arrived
 

@@ -1,9 +1,40 @@
-import { useEffect, useRef, useState } from "react";
-import { Check, Copy, Film, FileText, Trash2, Upload } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ArrowDownUp, Check, Copy, Film, FileText, Search, Trash2, Upload } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { adminDeleteAsset, adminListAssets, adminUploadAsset, type Asset } from "@/lib/admin-assets";
+
+// Grouped the way someone looking for a file thinks about it, not the way a
+// MIME type is written: "the showreel" and "the logo" rather than video/mp4.
+const KINDS = {
+  all: "All",
+  image: "Images",
+  video: "Video",
+  file: "Documents",
+} as const;
+type Kind = keyof typeof KINDS;
+
+function kindOf(asset: Asset): Exclude<Kind, "all"> {
+  const type = asset.contentType ?? "";
+  if (type.startsWith("image/")) return "image";
+  if (type.startsWith("video/")) return "video";
+  return "file";
+}
+
+const SORTS = {
+  name: "Name A–Z",
+  newest: "Newest first",
+  largest: "Largest first",
+} as const;
+type Sort = keyof typeof SORTS;
 
 // The file travels to the server as base64 inside the RPC, which inflates it by
 // a third — keep a ceiling well under the request limit.
@@ -44,6 +75,9 @@ export function AssetManager() {
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState<{ name: string; done: number; total: number } | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [kind, setKind] = useState<Kind>("all");
+  const [sort, setSort] = useState<Sort>("name");
   const fileInput = useRef<HTMLInputElement>(null);
 
   async function load() {
@@ -114,15 +148,37 @@ export function AssetManager() {
     setTimeout(() => setCopied(null), 2000);
   }
 
+  const visible = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    const matched = assets.filter((asset) => {
+      if (kind !== "all" && kindOf(asset) !== kind) return false;
+      return !needle || asset.name.toLowerCase().includes(needle);
+    });
+
+    return [...matched].sort((a, b) => {
+      switch (sort) {
+        case "newest":
+          // A file with no timestamp sorts last rather than ahead of everything.
+          return (b.updatedAt ?? "").localeCompare(a.updatedAt ?? "");
+        case "largest":
+          return b.size - a.size;
+        default:
+          return a.name.localeCompare(b.name);
+      }
+    });
+  }, [assets, query, kind, sort]);
+
   if (loading) return <p className="py-10 text-muted-foreground">Loading…</p>;
 
-  const totalSize = assets.reduce((sum, a) => sum + a.size, 0);
+  const totalSize = visible.reduce((sum, a) => sum + a.size, 0);
+  const filtered = visible.length !== assets.length;
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">
-          {assets.length} {assets.length === 1 ? "file" : "files"} · {formatSize(totalSize)}
+          {visible.length} {visible.length === 1 ? "file" : "files"}
+          {filtered ? ` of ${assets.length}` : ""} · {formatSize(totalSize)}
         </p>
         <div>
           <Input
@@ -139,6 +195,45 @@ export function AssetManager() {
         </div>
       </div>
 
+      {/* Same shape as the Leads tab: search narrows, the buttons cut to one
+          kind, the menu orders what's left. */}
+      <div className="flex flex-wrap gap-3">
+        <div className="relative min-w-56 flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search file name"
+            className="pl-9"
+          />
+        </div>
+        <div className="flex gap-1">
+          {(Object.keys(KINDS) as Kind[]).map((value) => (
+            <Button
+              key={value}
+              variant={kind === value ? "default" : "outline"}
+              size="sm"
+              onClick={() => setKind(value)}
+            >
+              {KINDS[value]}
+            </Button>
+          ))}
+        </div>
+        <Select value={sort} onValueChange={(next) => setSort(next as Sort)}>
+          <SelectTrigger className="w-44" aria-label="Sort files">
+            <ArrowDownUp className="size-4 shrink-0 text-muted-foreground" />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.entries(SORTS).map(([value, label]) => (
+              <SelectItem key={value} value={value}>
+                {label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       {progress ? (
         <p className="text-sm text-muted-foreground">Sending {progress.name}…</p>
       ) : null}
@@ -149,13 +244,15 @@ export function AssetManager() {
         </p>
       ) : null}
 
-      {assets.length === 0 ? (
+      {visible.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border py-16 text-center text-muted-foreground">
-          No files yet. Upload the CV, showreels and images here.
+          {assets.length
+            ? "No files match that search."
+            : "No files yet. Upload the CV, showreels and images here."}
         </p>
       ) : (
         <ul className="divide-y divide-border rounded-lg border border-border">
-          {assets.map((asset) => (
+          {visible.map((asset) => (
             <li key={asset.name} className="flex flex-wrap items-center gap-3 px-4 py-3">
               {/* Filenames alone make it hard to tell one key visual from
                   another; a still answers it at a glance. Videos have no

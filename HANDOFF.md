@@ -9,14 +9,16 @@ Last updated: 9 September 2026.
 ## Right now
 
 The site is live at https://eddie-nakharin.lovable.app and everything on it
-works: the contact form saves leads, 27 pieces of work across 8 campaigns
-display and play, the CV downloads, and the back-office at `/admin/leads` edits
-the copy, the photos, the works and the logos.
+works: the contact form saves leads and takes an attachment, a new enquiry
+reaches Eddie on Telegram and by email within seconds, 27 pieces of work across
+8 campaigns display and play, the CV downloads, and the back-office at
+`/admin/leads` edits every word, photo, document, campaign, role and logo.
 
 It is aimed at one reader: a recruiter who clicked a link from Eddie's CV or
 LinkedIn. That is why the hero carries an availability line, why the closing
-section offers an address to copy rather than only a form, and why search
-ranking is not something this site is trying to win.
+section offers an address to copy rather than only a form, why a visitor can
+attach a job description to the form, and why search ranking is not something
+this site is trying to win — nobody arrives here from a search.
 
 **Publishing lags the repo.** Pushing to `main` updates the Lovable *preview*
 only; the live site keeps serving the previous build until someone presses
@@ -33,9 +35,15 @@ first and the migrations second.
 
 ## Still to do
 
-Nothing is outstanding. The test leads are gone, and both secrets that had
-been seen — the Telegram bot token and `ADMIN_PASSWORD` — were rotated on
-9 September 2026.
+Nothing is broken and nothing is half-finished. The test leads are gone, and
+both secrets that had been seen — the Telegram bot token and `ADMIN_PASSWORD` —
+were rotated on 9 September 2026.
+
+**A share image worth looking at.** Content → Page → Share image is empty, so
+the link preview falls back to Lovable's automatic screenshot of the whole page
+— legible at full size, a dark smudge at the size a card actually renders. A
+1200×630 image carrying the name, the role being looked for and a photograph
+would do the job the card is there to do. Publish, then re-scrape (below).
 
 **A domain of its own** is the one change left that would move the needle, and
 it is deliberately deferred rather than forgotten: it would replace the
@@ -124,6 +132,29 @@ also why a broken query is invisible until you try to save.
   carrying its own `campaign` is a piece created in the back-office.
 - **Roles and logos** — one JSON row each in `site_content`
   (`experience.roles`, `experience.logos`), so the lists can grow.
+
+## The back-office
+
+Four tabs behind one password at `/admin/leads`.
+
+**Leads** — every enquiry, newest first. Rows tick, and a bar appears offering
+the three statuses and a delete across the whole selection; the tick boxes only
+ever cover what the current search and filter leave on screen, so acting on a
+selection can't reach a row that isn't visible. The sort menu orders what the
+status filters leave behind — by status is the one that answers "what still
+needs a reply". Opening a row shows the message and, if there is one, a button
+that mints a fresh signed link to the attachment.
+
+**Content** — every editable string and every photo slot, grouped by the
+section it appears in. It only sends fields that actually changed, so two
+people editing different tabs can't overwrite each other.
+
+**Works** — the 27 built-in pieces plus anything added here, with campaign
+grouping, ordering and per-piece file overrides.
+
+**Files** — the `site-assets` bucket. Search by name, filter to Images, Video
+or Documents, and sort by name, date or size; the count reads "12 of 74" while
+a filter is on so a short list is never mistaken for a lost upload.
 
 ## Attachments on the contact form
 
@@ -261,11 +292,15 @@ src/lib/
   works-catalogue.ts  the built-in list of work
   roles.ts            work history
   logos.ts            agency logos
+  site-url.ts         the site's own address — the one line to change if it moves
   admin-session.ts    password check, HMAC cookie
-  admin-assets.ts     Cloud Storage: list, upload, delete
-  submit-lead.ts      the contact form's server function
-  notify-lead.ts      the dormant email notification
+  admin-assets.ts     site-assets bucket: list, upload, delete
+  admin-leads.ts      read leads, set status, delete, sign an attachment link
+  submit-lead.ts      the contact form, the attachment, and the limits on it
+  notify-lead.ts      Telegram and email, one of each per lead
 
+src/components/site/   what a visitor sees
 src/components/admin/  one editor per tab
+src/routes/index.tsx        the page, and every meta tag a scraper reads
 src/routes/admin.leads.tsx  the back-office shell and the Leads tab
 ```

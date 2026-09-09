@@ -6,7 +6,6 @@ export type LeadNotification = {
   email: string;
   phone: string;
   message: string | null;
-  source: string | null;
 };
 
 const SITE = "https://eddie-nakharin.lovable.app";
@@ -32,7 +31,6 @@ function render(lead: LeadNotification) {
     ["Email", lead.email],
     ["Phone", lead.phone],
     ["Message", lead.message || "—"],
-    ["Page", lead.source || "—"],
   ];
 
   const text = [
@@ -84,7 +82,6 @@ async function notifyByTelegram(lead: LeadNotification): Promise<void> {
     `<b>Name</b>  ${escapeHtml(lead.name)}`,
     `<b>Email</b>  ${escapeHtml(lead.email)}`,
     `<b>Phone</b>  ${escapeHtml(lead.phone)}`,
-    `<b>Page</b>  ${escapeHtml(lead.source || "—")}`,
     "",
     escapeHtml(lead.message || "(no message)"),
     "",

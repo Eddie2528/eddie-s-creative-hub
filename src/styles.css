@@ -133,11 +133,16 @@ body {
 }
 
 /* The header is sticky and 65px tall, so an anchor landing flush with the top
-   of the viewport lands underneath it, heading and all. Each section stops
-   just clear of it instead. Their own top padding supplies the breathing room,
-   which is why this only covers the header rather than adding a gap on top. */
+   of the viewport lands underneath it, heading and all.
+
+   Stopping just *clear* of the header showed two rules seven pixels apart —
+   the header's bottom border and the section's own top border. Stopping a
+   little short instead tucks the section's border up behind the header, which
+   is opaque enough to swallow a 12% white hairline, so the header's border
+   reads as the single divider. The section's own top padding still supplies
+   all the breathing room under it. */
 :is(section[id], main[id]) {
-  scroll-margin-top: 4.5rem;
+  scroll-margin-top: 3.5rem;
 }
 
 @utility marquee-track {

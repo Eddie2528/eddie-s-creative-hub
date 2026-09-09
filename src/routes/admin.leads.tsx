@@ -555,7 +555,10 @@ function AdminLeads() {
                         <Paperclip className="size-4 shrink-0" />
                         <span className="min-w-0 truncate">{open.attachment_name}</span>
                         {open.attachment_size ? (
-                          <span className="shrink-0 text-muted-foreground">
+                          // Dimmed by opacity rather than a fixed grey: the
+                          // button turns amber on hover, and a muted colour
+                          // that ignores the state disappears into it.
+                          <span className="shrink-0 opacity-70">
                             {formatSize(open.attachment_size)}
                           </span>
                         ) : null}

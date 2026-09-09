@@ -33,21 +33,22 @@ first and the migrations second.
 
 ## Still to do
 
-- **Upload the university logos** (Chulalongkorn, Dhonburi Rajabhat) in the
-  Files tab, then pick them under Content → Profile. Nothing renders in that
-  slot until both are chosen. Around 220px tall, transparent PNG.
-- **Run migration 0007** in Cloud → SQL editor before the attachment feature
-  works. Until it runs, a visitor can still send an enquiry — the file just
-  won't stick, and the notification says so.
-- **Delete the test leads.** Eight enquiries from building the form, all on
-  `@test.com`. The Leads tab deletes one at a time, or:
-  `delete from public.leads where email ilike '%@test.com';`
-- **Add the phone number.** Content → Contact details → Phone is deliberately
-  empty, so nothing renders until it's filled in. The email beside it is live.
-- **Turn on Telegram lead alerts** — see below. Until then a lead is only
-  visible by opening the back-office.
-- **Email on a new lead** needs a provider configured — see below. Unset, it
-  logs one line and skips, and Telegram carries the notification alone.
+- **Delete the test leads.** Everything on `@test.com`, left over from building
+  the form, the notifications and the attachment upload. The Leads tab ticks
+  and deletes them in one go — search `test`, tick the header, Delete.
+- **Rotate the secrets that have been seen.** The Telegram bot token was once
+  visible in a screenshot, and `ADMIN_PASSWORD` is still a guessable phrase
+  built from a name and a former employer. Both change in Cloud → Secrets and
+  need a publish.
+- **A domain of its own** is the one change left that would move the needle:
+  it replaces the `.lovable.app` link on the CV, it is what removes the "Edit
+  with Lovable" badge, and verifying it in Resend lets the notification email
+  come from Eddie rather than `onboarding@resend.dev`.
+
+Everything else that used to live here is done: the university logos, the
+phone number, Telegram and Resend notifications, and migration 0007 — the
+attachment path was tested end to end on 9 September 2026, upload through to
+download from the back-office.
 
 ## Telling Eddie a lead arrived
 

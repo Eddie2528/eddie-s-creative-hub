@@ -43,21 +43,35 @@ first and the migrations second.
   empty, so nothing renders until it's filled in. The email beside it is live.
 - **Turn on Telegram lead alerts** — see below. Until then a lead is only
   visible by opening the back-office.
-- **Email on a new lead** is written and dormant. Sending needs a domain
-  registered under Cloud → Emails, which is a paid feature — the API refuses
-  every send without one. Set `LEAD_NOTIFY_DOMAIN` and it starts working with no
-  code change. Telegram covers the same job on the free plan.
+- **Email on a new lead** needs a provider configured — see below. Unset, it
+  logs one line and skips, and Telegram carries the notification alone.
 
 ## Telling Eddie a lead arrived
 
-Two independent channels, both best-effort: neither can fail a submission, and
-either one being unset says nothing about the other.
+Two independent channels — Telegram and email — run together and are both
+best-effort: neither can fail a submission, and either one being unset says
+nothing about the other.
 
-**Telegram** is the one that works without paying. Message `@BotFather`, send
-`/newbot`, and keep the token. Send the new bot a message, open
-`https://api.telegram.org/bot<TOKEN>/getUpdates`, and read `result[0].message.chat.id`.
-Put the two into Secrets as `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID`, then
-publish. Unset, it logs one line and skips.
+**Telegram** works without paying. Message `@BotFather`, send `/newbot`, and
+keep the token. Press Start in the new bot's own chat — Telegram won't let a bot
+message someone who hasn't — then read the chat id from `@userinfobot` or from
+`https://api.telegram.org/bot<TOKEN>/getUpdates` (`result[0].message.chat.id`).
+Put the two into Secrets as `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID`.
+
+**Email** has two providers and sends through exactly one, so a lead never
+arrives twice:
+
+- **Resend** wins whenever `RESEND_API_KEY` is set. Its shared
+  `onboarding@resend.dev` sender is free and needs no domain, but it only
+  delivers to the address that owns the Resend account — fine here, where the
+  only recipient is Eddie. `RESEND_FROM` overrides the sender once a domain is
+  verified there.
+- **Lovable Emails** takes over when Resend isn't configured and
+  `LEAD_NOTIFY_DOMAIN` names a domain registered under Cloud → Emails. That
+  registration is a paid feature; without it the API refuses every send
+  (403 `no_matching_sender`), which is why the code skips rather than tries.
+
+`LEAD_NOTIFY_TO` overrides the recipient for both.
 
 ## Migrations
 
@@ -81,7 +95,9 @@ a mechanism.
 | Name | Needed for |
 | --- | --- |
 | `ADMIN_PASSWORD` | the back-office. Unset means nobody gets in, including Eddie |
-| `LEAD_NOTIFY_DOMAIN` | lead notification emails (unset — see above) |
+| `RESEND_API_KEY` | lead emails through Resend — the free path, wins over Lovable's |
+| `RESEND_FROM` | overrides Resend's sender once a domain is verified there |
+| `LEAD_NOTIFY_DOMAIN` | lead emails through Lovable Emails — needs a paid registered domain |
 | `LEAD_NOTIFY_TO` | overrides the notification recipient |
 | `TELEGRAM_BOT_TOKEN` | Telegram lead alerts — from @BotFather |
 | `TELEGRAM_CHAT_ID` | Telegram lead alerts — the chat to post into |

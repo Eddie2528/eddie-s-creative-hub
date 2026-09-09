@@ -113,36 +113,64 @@ async function notifyByTelegram(lead: LeadNotification): Promise<void> {
   }
 }
 
-async function notifyByEmail(lead: LeadNotification): Promise<void> {
-  const apiKey = process.env["LOVABLE_API_KEY"];
-  const to = process.env["LEAD_NOTIFY_TO"] ?? "eddd612@gmail.com";
+function recipient() {
+  return process.env["LEAD_NOTIFY_TO"] ?? "eddd612@gmail.com";
+}
 
-  // Skip rather than attempt a send that can only fail — one guaranteed error
-  // per lead would bury the logs that matter.
-  if (!SENDER_DOMAIN) {
-    console.info("[lead] LEAD_NOTIFY_DOMAIN unset; lead saved, no email sent");
-    return;
-  }
-  if (!apiKey) {
-    console.warn("[lead] LOVABLE_API_KEY missing; lead saved, no email sent");
-    return;
-  }
+function subject(lead: LeadNotification) {
+  return `New lead: ${lead.name}`;
+}
 
+// Resend sends without a domain of its own: its shared `onboarding@resend.dev`
+// sender is free, and only delivers to the address that owns the Resend
+// account — which is exactly this case, one recipient who is the account
+// holder. Set RESEND_FROM once a real domain is verified there.
+async function sendViaResend(lead: LeadNotification, apiKey: string): Promise<void> {
+  const { text, html } = render(lead);
+
+  try {
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${apiKey}`,
+        "content-type": "application/json",
+        // The lead's own id, so a retried send can't produce a second email.
+        "idempotency-key": `lead-${lead.id}`,
+      },
+      body: JSON.stringify({
+        from: process.env["RESEND_FROM"] ?? "Eddie's Creative Hub <onboarding@resend.dev>",
+        to: [recipient()],
+        subject: subject(lead),
+        // So hitting reply in the mail client answers the lead, not the robot.
+        reply_to: lead.email,
+        text,
+        html,
+      }),
+    });
+    if (!response.ok) {
+      // Resend explains refusals in the body — an unverified sender and a
+      // recipient who isn't the account holder read very differently.
+      console.error(`[lead] Resend refused the email (${response.status}): ${await response.text()}`);
+    }
+  } catch (cause) {
+    console.error("[lead] Resend notification failed; the lead itself was saved", cause);
+  }
+}
+
+async function sendViaLovable(lead: LeadNotification, apiKey: string, domain: string): Promise<void> {
   const { text, html } = render(lead);
 
   try {
     await sendLovableEmail(
       {
-        to,
-        from: { name: "Eddie's Creative Hub", address: `noreply@${SENDER_DOMAIN}` },
-        sender_domain: SENDER_DOMAIN,
-        // So hitting reply in the mail client answers the lead, not the robot.
+        to: recipient(),
+        from: { name: "Eddie's Creative Hub", address: `noreply@${domain}` },
+        sender_domain: domain,
         reply_to: lead.email,
-        subject: `New lead: ${lead.name}`,
+        subject: subject(lead),
         text,
         html,
         purpose: "transactional",
-        // The lead's own id, so a retried send can't produce a second email.
         idempotency_key: `lead-${lead.id}`,
       },
       { apiKey },
@@ -150,6 +178,27 @@ async function notifyByEmail(lead: LeadNotification): Promise<void> {
   } catch (cause) {
     console.error("[lead] Notification email failed; the lead itself was saved", cause);
   }
+}
+
+// One email per lead, whichever provider is configured — never both, or every
+// enquiry would arrive twice. Resend wins because it works on the free plan;
+// Lovable's own sender takes over the moment a domain is registered there.
+async function notifyByEmail(lead: LeadNotification): Promise<void> {
+  const resendKey = process.env["RESEND_API_KEY"];
+  if (resendKey) return sendViaResend(lead, resendKey);
+
+  const lovableKey = process.env["LOVABLE_API_KEY"];
+  // Skip rather than attempt a send that can only fail — one guaranteed error
+  // per lead would bury the logs that matter.
+  if (!SENDER_DOMAIN) {
+    console.info("[lead] No email provider configured; lead saved, no email sent");
+    return;
+  }
+  if (!lovableKey) {
+    console.warn("[lead] LOVABLE_API_KEY missing; lead saved, no email sent");
+    return;
+  }
+  return sendViaLovable(lead, lovableKey, SENDER_DOMAIN);
 }
 
 // Tells Eddie a lead arrived. Never throws: the lead is already saved by the

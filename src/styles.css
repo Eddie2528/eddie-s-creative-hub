@@ -123,6 +123,23 @@ body {
   }
 }
 
+/* The nav links jump to a section; this makes the page travel there instead.
+   Reduced-motion gets the instant jump, which is the point of the setting —
+   a long smooth scroll is exactly the kind of movement it asks to avoid. */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* The header is sticky and 65px tall, so an anchor landing flush with the top
+   of the viewport lands underneath it, heading and all. Each section stops
+   just clear of it instead. Their own top padding supplies the breathing room,
+   which is why this only covers the header rather than adding a gap on top. */
+:is(section[id], main[id]) {
+  scroll-margin-top: 4.5rem;
+}
+
 @utility marquee-track {
   display: flex;
   width: max-content;

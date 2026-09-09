@@ -6,7 +6,19 @@ export type LeadNotification = {
   email: string;
   phone: string;
   message: string | null;
+  attachmentName: string | null;
+  attachmentStored: boolean;
 };
+
+// Named so it reads the same in an email table, a Telegram line and a log: a
+// file that didn't survive the upload has to be visible, or Eddie replies to a
+// brief he never received.
+function attachmentLine(lead: LeadNotification): string | null {
+  if (!lead.attachmentName) return null;
+  return lead.attachmentStored
+    ? lead.attachmentName
+    : `${lead.attachmentName} — upload failed, ask them to resend it`;
+}
 
 const SITE = "https://eddie-nakharin.lovable.app";
 
@@ -32,6 +44,9 @@ function render(lead: LeadNotification) {
     ["Phone", lead.phone],
     ["Message", lead.message || "—"],
   ];
+
+  const file = attachmentLine(lead);
+  if (file) rows.push(["Attachment", file]);
 
   const text = [
     "New lead from your portfolio",
@@ -82,6 +97,7 @@ async function notifyByTelegram(lead: LeadNotification): Promise<void> {
     `<b>Name</b>  ${escapeHtml(lead.name)}`,
     `<b>Email</b>  ${escapeHtml(lead.email)}`,
     `<b>Phone</b>  ${escapeHtml(lead.phone)}`,
+    ...(attachmentLine(lead) ? [`<b>Attachment</b>  ${escapeHtml(attachmentLine(lead) as string)}`] : []),
     "",
     escapeHtml(lead.message || "(no message)"),
     "",

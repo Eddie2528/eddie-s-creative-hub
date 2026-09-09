@@ -36,6 +36,9 @@ first and the migrations second.
 - **Upload the university logos** (Chulalongkorn, Dhonburi Rajabhat) in the
   Files tab, then pick them under Content → Profile. Nothing renders in that
   slot until both are chosen. Around 220px tall, transparent PNG.
+- **Run migration 0007** in Cloud → SQL editor before the attachment feature
+  works. Until it runs, a visitor can still send an enquiry — the file just
+  won't stick, and the notification says so.
 - **Delete the test leads.** Eight enquiries from building the form, all on
   `@test.com`. The Leads tab deletes one at a time, or:
   `delete from public.leads where email ilike '%@test.com';`
@@ -87,6 +90,7 @@ a mechanism.
 | `0004_site_works.sql` | `site_works` |
 | `0005_work_assets.sql` | per-work file overrides |
 | `0006_custom_works.sql` | campaign and kind, for works created in the back-office |
+| `0007_lead_attachments.sql` | attachment columns on `leads`, and the private `lead-files` bucket |
 
 `20260906043550_*.sql` is Lovable's own copy of 0001, written when it applied it.
 
@@ -125,6 +129,29 @@ also why a broken query is invisible until you try to save.
   carrying its own `campaign` is a piece created in the back-office.
 - **Roles and logos** — one JSON row each in `site_content`
   (`experience.roles`, `experience.logos`), so the lists can grow.
+
+## Attachments on the contact form
+
+A visitor can attach one file, up to 5 MB, from a short list of types
+(`ALLOWED_ATTACHMENT_TYPES` in `src/lib/submit-lead.ts`). The limit and the
+list are enforced on the server; the browser checks them too, only so the
+refusal is instant.
+
+**The bucket is private, unlike `site-assets`.** Someone attaching a brief is
+sending it to Eddie, not publishing it, so nothing in `lead-files` is reachable
+from a guessable URL. The back-office mints a signed link per click that expires
+within the hour, behind `requireAdmin` — there is no stored URL to leak. Don't
+"fix" this by making the bucket public.
+
+**The lead is saved before the file is touched.** If the upload fails — the
+bucket missing because 0007 hasn't run, storage down — the enquiry still stands
+and the notification says the file didn't make it, so Eddie can ask for it. A
+failed upload must never cost a lead.
+
+Storage keys are ASCII, and the extension is carried across separately: a wholly
+Thai filename strips to nothing, and `ตำแหน่งงาน.pdf` collapsing to a bare `pdf`
+would lose the extension. What the visitor named it survives regardless — the
+signed link carries the original name, so that is what downloads.
 
 ## Traps this project has already hit
 

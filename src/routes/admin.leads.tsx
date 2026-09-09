@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { ArrowDownUp, Download, LogOut, RefreshCw, Search, Trash2 } from "lucide-react";
+import { ArrowDownUp, Download, LogOut, Paperclip, RefreshCw, Search, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -22,6 +22,7 @@ import { WorksEditor } from "@/components/admin/WorksEditor";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   adminDeleteLeads,
+  adminLeadAttachmentUrl,
   adminListLeads,
   adminSetLeadStatus,
   adminSignIn,
@@ -63,6 +64,12 @@ function statusRank(status: string) {
   return index === -1 ? LEAD_STATUSES.length : index;
 }
 
+function formatSize(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
 function formatDate(value: string) {
   return new Date(value).toLocaleString(undefined, {
     dateStyle: "medium",
@@ -99,6 +106,8 @@ function AdminLeads() {
   const [sort, setSort] = useState<Sort>("newest");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [open, setOpen] = useState<Lead | null>(null);
+  const [fetchingFile, setFetchingFile] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
   const [expired, setExpired] = useState(false);
 
   function handleExpired() {
@@ -188,6 +197,24 @@ function AdminLeads() {
       setLeads(previous);
       const message = cause instanceof Error ? cause.message : "Couldn't delete.";
       if (message.startsWith(SESSION_EXPIRED)) handleExpired();
+    }
+  }
+
+  async function openAttachment(lead: Lead) {
+    setFetchingFile(true);
+    setFileError(null);
+    try {
+      const { url } = await adminLeadAttachmentUrl({ data: { id: lead.id } });
+      // The bucket is private and the link expires within the hour, so it is
+      // used the moment it arrives rather than stored anywhere.
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (cause) {
+      console.error("Opening the attachment failed", cause);
+      const message = cause instanceof Error ? cause.message : "Couldn\u2019t open the file.";
+      if (message.startsWith(SESSION_EXPIRED)) handleExpired();
+      setFileError(message);
+    } finally {
+      setFetchingFile(false);
     }
   }
 
@@ -480,7 +507,13 @@ function AdminLeads() {
         </TabsContent>
       </Tabs>
 
-      <Sheet open={open !== null} onOpenChange={(next) => !next && setOpen(null)}>
+      <Sheet
+        open={open !== null}
+        onOpenChange={(next) => {
+          if (!next) setOpen(null);
+          setFileError(null);
+        }}
+      >
         <SheetContent className="w-full overflow-y-auto sm:max-w-md">
           {open ? (
             <>
@@ -508,6 +541,33 @@ function AdminLeads() {
                   <dt className="text-muted-foreground">Message</dt>
                   <dd className="whitespace-pre-wrap">{open.message || "—"}</dd>
                 </div>
+                {open.attachment_name ? (
+                  <div>
+                    <dt className="mb-2 text-muted-foreground">Attachment</dt>
+                    <dd>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={fetchingFile}
+                        onClick={() => void openAttachment(open)}
+                        className="max-w-full"
+                      >
+                        <Paperclip className="size-4 shrink-0" />
+                        <span className="min-w-0 truncate">{open.attachment_name}</span>
+                        {open.attachment_size ? (
+                          <span className="shrink-0 text-muted-foreground">
+                            {formatSize(open.attachment_size)}
+                          </span>
+                        ) : null}
+                      </Button>
+                      {fileError ? (
+                        <p role="alert" className="mt-2 text-sm text-destructive">
+                          {fileError}
+                        </p>
+                      ) : null}
+                    </dd>
+                  </div>
+                ) : null}
                 <div>
                   <dt className="text-muted-foreground">Received</dt>
                   <dd>

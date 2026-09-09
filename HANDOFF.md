@@ -205,6 +205,25 @@ Adding a seventh read means adding it to the array, not a line above it. Four of
 the six still query `site_content` separately; in parallel that costs one round
 trip, but it's the obvious thing to consolidate if the loader ever needs more.
 
+**Scroll-driven animation has two traps, and both look like "it just doesn't
+work".** The parallax on the hero and profile photos hit each in turn.
+
+First, never use the `animation` shorthand for one. The shorthand resets
+`animation-duration` to `0s`, and a scroll-driven animation needs `auto` to
+mean "span the whole timeline" — at `0s` it is applied, running, and frozen on
+its first frame. Use the longhands, `animation-duration: auto` included.
+
+Second, `overflow: hidden` on an ancestor makes that box a scroll container, so
+`view()` measures the subject against *it* rather than the page. A frame that
+never scrolls pins progress at exactly 50% forever. `overflow: clip` crops
+identically and creates no scroll container, which is why `PhotoCarousel` uses
+it. A constant 50% is the signature of this one.
+
+To check either, read `element.getAnimations()[0].currentTime` at two scroll
+positions — the computed `translate` alone doesn't tell you which trap you're
+in, and `transform` reads `none` because the keyframes animate the standalone
+`translate` property.
+
 **The marquee needs exactly two copies of the logo set.** The animation travels
 -50%; three copies land the loop mid-set and the strip visibly snaps.
 

@@ -123,6 +123,48 @@ body {
   }
 }
 
+/* Parallax without a scroll listener. A scroll-driven animation is handed to
+   the compositor, so it costs nothing on the main thread and can't stutter the
+   way a JS scroll handler does on a phone.
+
+   Everything sits inside @supports: where the timeline isn't understood the
+   image simply doesn't move, at its natural size and framing. Nothing is laid
+   out differently, so there is no fallback to get wrong. */
+@utility parallax {
+  @supports (animation-timeline: view()) {
+    /* Bigger than its frame, so the drift never pulls an edge into view: 1.12
+       leaves 6% hanging off the top and bottom, and the drift below is 4%. */
+    scale: 1.12;
+    /* Longhands, not the `animation` shorthand: the shorthand resets duration
+       to 0s, and a scroll-driven animation needs `auto` to mean "span the
+       whole timeline". With 0s it is applied and permanently frozen on its
+       first frame — which looks exactly like the feature not working. */
+    animation-name: parallax-drift;
+    animation-duration: auto;
+    animation-timing-function: linear;
+    animation-fill-mode: both;
+    animation-timeline: view();
+    animation-range: cover 0% cover 100%;
+  }
+
+  /* Someone who has asked their system for less motion has usually asked for
+     a reason — vestibular disorders make drifting backgrounds genuinely
+     unpleasant. They get the still image. */
+  @media (prefers-reduced-motion: reduce) {
+    scale: 1;
+    animation-name: none;
+  }
+}
+
+@keyframes parallax-drift {
+  from {
+    translate: 0 -4%;
+  }
+  to {
+    translate: 0 4%;
+  }
+}
+
 @utility marquee-track {
   display: flex;
   width: max-content;

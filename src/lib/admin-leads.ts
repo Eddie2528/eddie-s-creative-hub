@@ -46,8 +46,14 @@ export const adminListLeads = createServerFn({ method: "POST" }).handler(async (
   return data ?? [];
 });
 
+// Both of these take a list. The back-office ticks rows and acts on them
+// together — clearing a batch of test enquiries one confirmation at a time was
+// the tedious part — and a single row is simply a list of one, so there is one
+// code path rather than two that can drift apart.
+const idList = z.array(z.string().uuid()).min(1).max(500);
+
 export const adminSetLeadStatus = createServerFn({ method: "POST" })
-  .validator(z.object({ id: z.string().uuid(), status: z.enum(LEAD_STATUSES) }))
+  .validator(z.object({ ids: idList, status: z.enum(LEAD_STATUSES) }))
   .handler(async ({ data }): Promise<{ ok: true }> => {
     const { requireAdmin } = await import("./admin-session");
     await requireAdmin();
@@ -56,23 +62,23 @@ export const adminSetLeadStatus = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin
       .from("leads")
       .update({ status: data.status })
-      .eq("id", data.id);
+      .in("id", data.ids);
 
-    if (error) throw new Error(`Failed to update lead: ${error.message}`);
+    if (error) throw new Error(`Failed to update leads: ${error.message}`);
     return { ok: true };
   });
 
-// Deleting a lead throws away someone's enquiry for good, so it is deliberately
-// a single row at a time with the name shown before it happens.
-export const adminDeleteLead = createServerFn({ method: "POST" })
-  .validator(z.object({ id: z.string().uuid() }))
+// Deleting throws away someone's enquiry for good, so the caller names what is
+// about to go — the person, or the count — and asks before calling this.
+export const adminDeleteLeads = createServerFn({ method: "POST" })
+  .validator(z.object({ ids: idList }))
   .handler(async ({ data }): Promise<{ ok: true }> => {
     const { requireAdmin } = await import("./admin-session");
     await requireAdmin();
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.from("leads").delete().eq("id", data.id);
+    const { error } = await supabaseAdmin.from("leads").delete().in("id", data.ids);
 
-    if (error) throw new Error(`Couldn’t delete the lead — ${error.message}`);
+    if (error) throw new Error(`Couldn’t delete — ${error.message}`);
     return { ok: true };
   });

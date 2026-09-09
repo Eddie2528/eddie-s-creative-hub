@@ -1,11 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { Download, LogOut, RefreshCw, Search, Trash2 } from "lucide-react";
+import { ArrowDownUp, Download, LogOut, RefreshCw, Search, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ContentEditor } from "@/components/admin/ContentEditor";
@@ -13,7 +21,7 @@ import { AssetManager } from "@/components/admin/AssetManager";
 import { WorksEditor } from "@/components/admin/WorksEditor";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
-  adminDeleteLead,
+  adminDeleteLeads,
   adminListLeads,
   adminSetLeadStatus,
   adminSignIn,
@@ -39,6 +47,21 @@ const STATUS_STYLES: Record<string, string> = {
   contacted: "bg-muted text-muted-foreground",
   archived: "bg-transparent text-muted-foreground border border-border",
 };
+
+const SORTS = {
+  newest: "Newest first",
+  oldest: "Oldest first",
+  status: "Status — new first",
+  name: "Name A–Z",
+} as const;
+type Sort = keyof typeof SORTS;
+
+// LEAD_STATUSES is already in the order a lead moves through, so its index is
+// the sort key. Anything unrecognised sorts last rather than jumping the queue.
+function statusRank(status: string) {
+  const index = LEAD_STATUSES.indexOf(status as LeadStatus);
+  return index === -1 ? LEAD_STATUSES.length : index;
+}
 
 function formatDate(value: string) {
   return new Date(value).toLocaleString(undefined, {
@@ -73,6 +96,8 @@ function AdminLeads() {
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<LeadStatus | "all">("all");
+  const [sort, setSort] = useState<Sort>("newest");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [open, setOpen] = useState<Lead | null>(null);
   const [expired, setExpired] = useState(false);
 
@@ -122,30 +147,44 @@ function AdminLeads() {
     }
   }
 
-  async function setStatus(lead: Lead, status: LeadStatus) {
+  async function applyStatus(ids: string[], status: LeadStatus) {
+    if (ids.length === 0) return;
+    const chosen = new Set(ids);
     const previous = leads;
     // Update in place first: the round trip is slow enough to feel broken.
-    setLeads((current) => current.map((l) => (l.id === lead.id ? { ...l, status } : l)));
-    setOpen((current) => (current && current.id === lead.id ? { ...current, status } : current));
+    setLeads((current) => current.map((l) => (chosen.has(l.id) ? { ...l, status } : l)));
+    setOpen((current) => (current && chosen.has(current.id) ? { ...current, status } : current));
     try {
-      await adminSetLeadStatus({ data: { id: lead.id, status } });
+      await adminSetLeadStatus({ data: { ids, status } });
     } catch (cause) {
       console.error("Status update failed", cause);
       setLeads(previous);
+      const message = cause instanceof Error ? cause.message : "";
+      if (message.startsWith(SESSION_EXPIRED)) handleExpired();
     }
   }
 
-  async function removeLead(lead: Lead) {
-    if (!confirm(`Delete the enquiry from ${lead.name} (${lead.email})? This can't be undone.`)) {
-      return;
-    }
+  async function removeLeads(ids: string[]) {
+    if (ids.length === 0) return;
+    const chosen = new Set(ids);
+    const going = leads.filter((l) => chosen.has(l.id));
+    const first = going[0];
+    // One lead is named, several are counted — "Delete 6 enquiries" says more
+    // than six names would.
+    const what =
+      going.length === 1 && first
+        ? `the enquiry from ${first.name} (${first.email})`
+        : `${going.length} enquiries`;
+    if (!confirm(`Delete ${what}? This can't be undone.`)) return;
+
     const previous = leads;
-    setLeads((current) => current.filter((l) => l.id !== lead.id));
+    setLeads((current) => current.filter((l) => !chosen.has(l.id)));
+    setSelectedIds(new Set());
     setOpen(null);
     try {
-      await adminDeleteLead({ data: { id: lead.id } });
+      await adminDeleteLeads({ data: { ids } });
     } catch (cause) {
-      console.error("Deleting lead failed", cause);
+      console.error("Deleting leads failed", cause);
       setLeads(previous);
       const message = cause instanceof Error ? cause.message : "Couldn't delete.";
       if (message.startsWith(SESSION_EXPIRED)) handleExpired();
@@ -154,14 +193,59 @@ function AdminLeads() {
 
   const visible = useMemo(() => {
     const needle = query.trim().toLowerCase();
-    return leads.filter((lead) => {
+    const matched = leads.filter((lead) => {
       if (statusFilter !== "all" && lead.status !== statusFilter) return false;
       if (!needle) return true;
       return [lead.name, lead.email, lead.phone, lead.message ?? ""].some((field) =>
         field.toLowerCase().includes(needle),
       );
     });
-  }, [leads, query, statusFilter]);
+
+    // Sorting a copy: `leads` is what the optimistic updates roll back to.
+    return [...matched].sort((a, b) => {
+      switch (sort) {
+        case "oldest":
+          return a.created_at.localeCompare(b.created_at);
+        case "name":
+          return a.name.localeCompare(b.name);
+        case "status":
+          // Newest first inside each status, so the freshest unanswered
+          // enquiry is the first row on the page.
+          return (
+            statusRank(a.status) - statusRank(b.status) ||
+            b.created_at.localeCompare(a.created_at)
+          );
+        default:
+          return b.created_at.localeCompare(a.created_at);
+      }
+    });
+  }, [leads, query, statusFilter, sort]);
+
+  // A tick you can't see is one you can't reason about: filtering, searching or
+  // acting on a row drops anything no longer on screen, so the count in the bar
+  // always matches the ticked rows.
+  useEffect(() => {
+    setSelectedIds((current) => {
+      if (current.size === 0) return current;
+      const onScreen = new Set(visible.map((lead) => lead.id));
+      const next = new Set([...current].filter((id) => onScreen.has(id)));
+      return next.size === current.size ? current : next;
+    });
+  }, [visible]);
+
+  const allSelected = visible.length > 0 && visible.every((lead) => selectedIds.has(lead.id));
+
+  function toggleAll() {
+    setSelectedIds(allSelected ? new Set() : new Set(visible.map((lead) => lead.id)));
+  }
+
+  function toggleOne(id: string) {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (!next.delete(id)) next.add(id);
+      return next;
+    });
+  }
 
   function exportCsv() {
     const blob = new Blob([toCsv(visible)], { type: "text/csv;charset=utf-8" });
@@ -287,12 +371,66 @@ function AdminLeads() {
             </Button>
           ))}
         </div>
+        {/* The buttons above narrow the list down to one status; this orders
+            whatever is left. Sorting by status is the one that answers "what
+            still needs a reply" without hiding the rest. */}
+        <Select value={sort} onValueChange={(next) => setSort(next as Sort)}>
+          <SelectTrigger className="w-52" aria-label="Sort leads">
+            <ArrowDownUp className="size-4 shrink-0 text-muted-foreground" />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.entries(SORTS).map(([value, label]) => (
+              <SelectItem key={value} value={value}>
+                {label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
+
+      {selectedIds.size > 0 ? (
+        <div className="mt-4 flex flex-wrap items-center gap-2 rounded-lg border border-border bg-secondary/40 px-4 py-3">
+          <span className="text-sm font-medium">
+            {selectedIds.size} selected
+          </span>
+          <span className="text-sm text-muted-foreground">— set status to</span>
+          <div className="flex flex-wrap gap-1">
+            {LEAD_STATUSES.map((status) => (
+              <Button
+                key={status}
+                size="sm"
+                variant="outline"
+                className="capitalize"
+                onClick={() => void applyStatus([...selectedIds], status)}
+              >
+                {status}
+              </Button>
+            ))}
+          </div>
+          <div className="ml-auto flex gap-1">
+            <Button size="sm" variant="outline" onClick={() => void removeLeads([...selectedIds])}>
+              <Trash2 className="size-4" /> Delete
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>
+              Clear
+            </Button>
+          </div>
+        </div>
+      ) : null}
 
       <div className="mt-6 overflow-x-auto rounded-lg border border-border">
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-10">
+                <Checkbox
+                  checked={allSelected}
+                  disabled={visible.length === 0}
+                  onCheckedChange={toggleAll}
+                  aria-label={allSelected ? "Clear selection" : "Select every row shown"}
+                />
+              </TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Phone</TableHead>
@@ -303,13 +441,26 @@ function AdminLeads() {
           <TableBody>
             {visible.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="py-10 text-center text-muted-foreground">
+                <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
                   {leads.length ? "No leads match those filters." : "No leads yet."}
                 </TableCell>
               </TableRow>
             ) : (
               visible.map((lead) => (
-                <TableRow key={lead.id} onClick={() => setOpen(lead)} className="cursor-pointer">
+                <TableRow
+                  key={lead.id}
+                  onClick={() => setOpen(lead)}
+                  className={`cursor-pointer ${selectedIds.has(lead.id) ? "bg-secondary/50" : ""}`}
+                >
+                  {/* The row opens the lead; the tick box must not, or picking
+                      rows to delete would open six panels on the way. */}
+                  <TableCell className="w-10" onClick={(e) => e.stopPropagation()}>
+                    <Checkbox
+                      checked={selectedIds.has(lead.id)}
+                      onCheckedChange={() => toggleOne(lead.id)}
+                      aria-label={`Select ${lead.name}`}
+                    />
+                  </TableCell>
                   <TableCell className="font-medium">{lead.name}</TableCell>
                   <TableCell className="text-muted-foreground">{lead.email}</TableCell>
                   <TableCell className="whitespace-nowrap text-muted-foreground">{lead.phone}</TableCell>
@@ -371,7 +522,7 @@ function AdminLeads() {
                         key={status}
                         size="sm"
                         variant={open.status === status ? "default" : "outline"}
-                        onClick={() => void setStatus(open, status)}
+                        onClick={() => void applyStatus([open.id], status)}
                         className="capitalize"
                       >
                         {status}
@@ -381,7 +532,7 @@ function AdminLeads() {
                 </div>
               </dl>
               <div className="mt-8 border-t border-border px-4 pt-4">
-                <Button variant="outline" size="sm" onClick={() => void removeLead(open)}>
+                <Button variant="outline" size="sm" onClick={() => void removeLeads([open.id])}>
                   <Trash2 className="size-4" /> Delete this lead
                 </Button>
               </div>

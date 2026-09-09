@@ -133,6 +133,12 @@ export const CONTENT_FIELDS: ContentField[] = [
 export type ImageField = { key: string; section: string; label: string };
 
 export const IMAGE_FIELDS: ImageField[] = [
+  // What Facebook, LINE and Slack show when the link is posted. Unset, the
+  // page falls back to Lovable's automatic screenshot of whatever the site
+  // looked like at the last publish — which changes on its own and is not a
+  // thing to leave to chance on a link that goes out on a CV. 1200x630.
+  { key: "meta.image", section: "Page", label: "Share image — shown when the link is posted (1200×630)" },
+
   { key: "hero.photo1", section: "Hero", label: "Carousel photo 1" },
   { key: "hero.photo2", section: "Hero", label: "Carousel photo 2" },
   { key: "hero.photo3", section: "Hero", label: "Carousel photo 3" },

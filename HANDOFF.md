@@ -221,6 +221,20 @@ and pins progress at exactly 50%; `overflow: clip` crops the same and creates
 no scroll container. Read `element.getAnimations()[0].currentTime` at two
 scroll positions to tell them apart — a constant 50% is the second one.
 
+**Lovable appends its own og:image, and its URL changes every publish.** It
+is an automatic screenshot of whatever the site looked like at that build,
+served from an r2.dev path named after the commit — so the link preview is
+whatever the page happened to look like, at 1920×1080 rather than the 1200×630
+a card wants. Choosing an image under Content → Page → Share image emits a
+proper og:image *before* Lovable's, and a scraper takes the first one it
+finds. Leaving it unset falls back to the screenshot rather than nothing.
+
+**Facebook caches a scrape and will not refresh on its own.** A link that was
+shared before the tags were right keeps showing the old card indefinitely.
+Paste the URL into developers.facebook.com/tools/debug and press Scrape Again
+after changing anything a card shows. The tags being correct in `curl` says
+nothing about what Facebook is still holding.
+
 **The marquee needs exactly two copies of the logo set.** The animation travels
 -50%; three copies land the loop mid-set and the strip visibly snaps.
 

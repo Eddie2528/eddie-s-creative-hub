@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { getCvUrl } from "@/lib/site-assets";
+import { SITE_URL } from "@/lib/site-url";
 import { getSiteContent, getSiteImages } from "@/lib/site-content";
 import { getCampaigns } from "@/lib/works";
 import { getRoles } from "@/lib/roles";
@@ -27,6 +28,12 @@ export const Route = createFileRoute("/")({
   head: ({ loaderData }) => {
     const title = loaderData?.content["meta.title"] ?? TITLE;
     const description = loaderData?.content["meta.description"] ?? DESCRIPTION;
+    // Chosen in the back-office. Lovable appends its own og:image — a
+    // screenshot of whatever the site looked like at the last publish, under a
+    // URL that changes every time — after these tags, and a scraper takes the
+    // first one it finds. So setting this takes the preview over; leaving it
+    // unset keeps the automatic screenshot rather than showing nothing.
+    const share = loaderData?.images["meta.image"];
     return {
     meta: [
       { title },
@@ -34,7 +41,18 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: title },
       { property: "og:description", content: description },
       { property: "og:type", content: "profile" },
+      { property: "og:url", content: SITE_URL },
       { name: "twitter:card", content: "summary_large_image" },
+      ...(share
+        ? [
+            { property: "og:image", content: share },
+            // Facebook lays out the card before the image arrives; without
+            // these it guesses, and a wide card can come back cropped square.
+            { property: "og:image:width", content: "1200" },
+            { property: "og:image:height", content: "630" },
+            { name: "twitter:image", content: share },
+          ]
+        : []),
     ],
     };
   },

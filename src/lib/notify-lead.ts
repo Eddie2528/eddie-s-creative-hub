@@ -1,5 +1,7 @@
 import { sendLovableEmail } from "@lovable.dev/email-js";
 
+import { SITE_URL } from "./site-url";
+
 export type LeadNotification = {
   id: string;
   name: string;
@@ -19,8 +21,6 @@ function attachmentLine(lead: LeadNotification): string | null {
     ? lead.attachmentName
     : `${lead.attachmentName} — upload failed, ask them to resend it`;
 }
-
-const SITE = "https://eddie-nakharin.lovable.app";
 
 // Lovable's send API needs a registered sender domain: without one it answers
 // 400 missing_parameter, and with an unregistered one 403 no_matching_sender.
@@ -53,7 +53,7 @@ function render(lead: LeadNotification) {
     "",
     ...rows.map(([label, value]) => `${label}: ${value}`),
     "",
-    SITE,
+    SITE_URL,
   ].join("\n");
 
   const html = `
@@ -101,7 +101,7 @@ async function notifyByTelegram(lead: LeadNotification): Promise<void> {
     "",
     escapeHtml(lead.message || "(no message)"),
     "",
-    `<a href="${SITE}/admin/leads">Open the back-office</a>`,
+    `<a href="${SITE_URL}/admin/leads">Open the back-office</a>`,
   ].join("\n");
 
   try {

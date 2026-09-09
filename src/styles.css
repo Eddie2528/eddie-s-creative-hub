@@ -132,9 +132,16 @@ body {
    out differently, so there is no fallback to get wrong. */
 @utility parallax {
   @supports (animation-timeline: view()) {
-    /* Bigger than its frame, so the drift never pulls an edge into view: 1.12
-       leaves 6% hanging off the top and bottom, and the drift below is 4%. */
-    scale: 1.12;
+    /* Bigger than its frame, so the drift never pulls an edge into view.
+       The scale has to clear 1/(1 - 2 × drift) or the photo runs out of
+       overhang at the extremes: at 8% drift that floor is 1.19, and 1.24
+       leaves a real margin rather than the 2px that 1.2 was scraping by on.
+       Recompute this if the drift changes.
+
+       An earlier 4% against 1.12 measured 59px of travel spread over 1,600px
+       of scrolling — 3.6% slower than the page, which is below what anyone
+       notices. Restraint that lands at invisible is just cost. */
+    scale: 1.24;
     /* Longhands, not the `animation` shorthand: the shorthand resets duration
        to 0s, and a scroll-driven animation needs `auto` to mean "span the
        whole timeline". With 0s it is applied and permanently frozen on its
@@ -158,10 +165,10 @@ body {
 
 @keyframes parallax-drift {
   from {
-    translate: 0 -4%;
+    translate: 0 -8%;
   }
   to {
-    translate: 0 4%;
+    translate: 0 8%;
   }
 }
 

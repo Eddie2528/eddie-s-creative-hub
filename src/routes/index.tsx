@@ -9,6 +9,7 @@ import { ArrowUpRight, Download, Mail } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { LeadDialog } from "@/components/site/LeadDialog";
+import { DirectContact } from "@/components/site/DirectContact";
 import { SocialLinks } from "@/components/site/SocialLinks";
 import { PhotoCarousel } from "@/components/site/PhotoCarousel";
 import { Works } from "@/components/site/Works";
@@ -37,14 +38,21 @@ export const Route = createFileRoute("/")({
     ],
     };
   },
-  loader: async () => ({
-    cvUrl: await getCvUrl(),
-    content: await getSiteContent(),
-    images: await getSiteImages(),
-    campaigns: await getCampaigns(),
-    roles: await getRoles(),
-    logos: await getLogos(),
-  }),
+  // Six independent reads. Awaited one after another the page couldn't render
+  // until all six round trips had finished in series — measured at 4.4s to
+  // first byte on a cold worker, 0.9–1.5s warm. Nothing here depends on
+  // anything else here, so they go together.
+  loader: async () => {
+    const [cvUrl, content, images, campaigns, roles, logos] = await Promise.all([
+      getCvUrl(),
+      getSiteContent(),
+      getSiteImages(),
+      getCampaigns(),
+      getRoles(),
+      getLogos(),
+    ]);
+    return { cvUrl, content, images, campaigns, roles, logos };
+  },
   component: Index,
 });
 
@@ -121,6 +129,18 @@ function Index() {
             <span className="text-primary">{content["hero.headline2"]}</span>{" "}
             {content["hero.headline3"]}
           </h1>
+
+          {/* What he's looking for, above the fold at every width. The site
+              said plenty about who Eddie is and nothing about what he wants. */}
+          {content["hero.availability"] ? (
+            <p className="mt-7 inline-flex max-w-full items-center gap-2.5 rounded-full border border-primary/40 bg-primary/5 px-4 py-2 text-sm text-foreground/90">
+              <span className="relative flex size-2 shrink-0">
+                <span className="absolute inline-flex size-full animate-ping rounded-full bg-primary opacity-60" />
+                <span className="relative inline-flex size-2 rounded-full bg-primary" />
+              </span>
+              {content["hero.availability"]}
+            </p>
+          ) : null}
 
           <div className="mt-[clamp(2rem,6vw,3rem)] grid gap-[clamp(1.5rem,4vw,2.5rem)] md:grid-cols-12 md:items-start">
             <div className="md:col-span-5">
@@ -254,6 +274,7 @@ function Index() {
                 </a>
               </Button>
             </div>
+            <DirectContact content={content} />
           </div>
         </section>
       </main>

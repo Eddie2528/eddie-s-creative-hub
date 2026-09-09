@@ -10,6 +10,10 @@ export type ContentField = {
   label: string;
   value: string;
   multiline?: boolean;
+  // Emptying the field in the back-office removes it from the page, rather than
+  // falling back to the default below. Only for things that are genuinely
+  // optional — a social link, a status line that stops being true.
+  blankable?: boolean;
 };
 
 export const CONTENT_FIELDS: ContentField[] = [
@@ -28,6 +32,16 @@ export const CONTENT_FIELDS: ContentField[] = [
   { key: "hero.headline1", section: "Hero", label: "Headline, first line", value: "Creative mind," },
   { key: "hero.headline2", section: "Hero", label: "Headline, highlighted word", value: "business" },
   { key: "hero.headline3", section: "Hero", label: "Headline, rest", value: "instinct." },
+  // Sits under the headline, above the fold on every width. A recruiter opening
+  // this from a CV link wants to know what Eddie is looking for before they
+  // read anything else — and can turn it off the day it stops being true.
+  {
+    key: "hero.availability",
+    section: "Hero",
+    label: "Availability line — empty removes it from the page",
+    blankable: true,
+    value: "Open to Business Director & Account Director roles in Bangkok",
+  },
   { key: "hero.greeting", section: "Hero", label: "Greeting", value: "Hi, I’m Eddie." },
   {
     key: "hero.intro1",
@@ -83,8 +97,15 @@ export const CONTENT_FIELDS: ContentField[] = [
   { key: "cta.heading", section: "Closing", label: "Closing headline", value: "Let’s make something" },
   { key: "cta.primary", section: "Closing", label: "Primary button", value: "Get in Touch" },
   { key: "cta.secondary", section: "Closing", label: "Secondary button", value: "Download my CV" },
-  { key: "social.instagram", section: "Closing", label: "Instagram URL — blank hides the button", value: "https://www.instagram.com/eddie_uthaichalanon/" },
-  { key: "social.linkedin", section: "Closing", label: "LinkedIn URL — blank hides the button", value: "https://www.linkedin.com/in/nakharin-uthaichalanon-a10909101/" },
+  { key: "social.instagram", section: "Closing", label: "Instagram URL — blank hides the button", blankable: true, value: "https://www.instagram.com/eddie_uthaichalanon/" },
+  { key: "social.linkedin", section: "Closing", label: "LinkedIn URL — blank hides the button", blankable: true, value: "https://www.linkedin.com/in/nakharin-uthaichalanon-a10909101/" },
+
+  // Recruiters rarely fill in a form: they copy an address into their own mail
+  // client or paste it into an applicant tracking system. Without something to
+  // copy they go back to LinkedIn and the site has done nothing.
+  { key: "contact.note", section: "Contact details", label: "Line above the details", blankable: true, value: "Or reach me directly" },
+  { key: "contact.email", section: "Contact details", label: "Email — empty removes the link", blankable: true, value: "eddd612@gmail.com" },
+  { key: "contact.phone", section: "Contact details", label: "Phone — empty removes the link", blankable: true, value: "" },
 
   { key: "form.title", section: "Contact form", label: "Dialog heading", value: "Get in touch" },
   { key: "form.name.label", section: "Contact form", label: "Name — label", value: "Name / Company’s name" },
@@ -151,7 +172,12 @@ export function mergeContent(stored: SiteContent): SiteContent {
   const merged = { ...CONTENT_DEFAULTS };
   for (const field of CONTENT_FIELDS) {
     const value = stored[field.key];
-    if (typeof value === "string" && value.length > 0) merged[field.key] = value;
+    if (typeof value !== "string") continue;
+    // An empty value normally means "never set" and keeps the default — the
+    // back-office only sends fields that changed, so a row exists only because
+    // someone typed in it. For a blankable field that emptied row is the whole
+    // point: it's how the line gets taken off the page.
+    if (value.length > 0 || field.blankable) merged[field.key] = value;
   }
   for (const field of [...IMAGE_FIELDS, ...FILE_FIELDS]) {
     const value = stored[field.key];

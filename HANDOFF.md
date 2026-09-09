@@ -4,7 +4,7 @@ Where the project stands and what to know before touching it. Read
 [PRD.md](PRD.md) first for what the site is and why it's built this way; this
 file is the state of play.
 
-Last updated: 7 September 2026.
+Last updated: 9 September 2026.
 
 ## Right now
 
@@ -12,6 +12,11 @@ The site is live at https://eddie-nakharin.lovable.app and everything on it
 works: the contact form saves leads, 27 pieces of work across 8 campaigns
 display and play, the CV downloads, and the back-office at `/admin/leads` edits
 the copy, the photos, the works and the logos.
+
+It is aimed at one reader: a recruiter who clicked a link from Eddie's CV or
+LinkedIn. That is why the hero carries an availability line, why the closing
+section offers an address to copy rather than only a form, and why search
+ranking is not something this site is trying to win.
 
 **Publishing lags the repo.** Pushing to `main` updates the Lovable *preview*
 only; the live site keeps serving the previous build until someone presses
@@ -34,10 +39,25 @@ first and the migrations second.
 - **Delete the test leads.** Eight enquiries from building the form, all on
   `@test.com`. The Leads tab deletes one at a time, or:
   `delete from public.leads where email ilike '%@test.com';`
+- **Add the phone number.** Content → Contact details → Phone is deliberately
+  empty, so nothing renders until it's filled in. The email beside it is live.
+- **Turn on Telegram lead alerts** — see below. Until then a lead is only
+  visible by opening the back-office.
 - **Email on a new lead** is written and dormant. Sending needs a domain
   registered under Cloud → Emails, which is a paid feature — the API refuses
   every send without one. Set `LEAD_NOTIFY_DOMAIN` and it starts working with no
-  code change.
+  code change. Telegram covers the same job on the free plan.
+
+## Telling Eddie a lead arrived
+
+Two independent channels, both best-effort: neither can fail a submission, and
+either one being unset says nothing about the other.
+
+**Telegram** is the one that works without paying. Message `@BotFather`, send
+`/newbot`, and keep the token. Send the new bot a message, open
+`https://api.telegram.org/bot<TOKEN>/getUpdates`, and read `result[0].message.chat.id`.
+Put the two into Secrets as `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID`, then
+publish. Unset, it logs one line and skips.
 
 ## Migrations
 
@@ -63,6 +83,8 @@ a mechanism.
 | `ADMIN_PASSWORD` | the back-office. Unset means nobody gets in, including Eddie |
 | `LEAD_NOTIFY_DOMAIN` | lead notification emails (unset — see above) |
 | `LEAD_NOTIFY_TO` | overrides the notification recipient |
+| `TELEGRAM_BOT_TOKEN` | Telegram lead alerts — from @BotFather |
+| `TELEGRAM_CHAT_ID` | Telegram lead alerts — the chat to post into |
 
 Secrets apply to preview immediately and to the live site **only after a
 publish**.
@@ -75,7 +97,10 @@ also why a broken query is invisible until you try to save.
 
 - **Copy** — `CONTENT_FIELDS` in `src/lib/site-content.ts` holds every editable
   string with its default; rows in `site_content` override by key. Adding an
-  editable field is one entry in that list.
+  editable field is one entry in that list. An empty value normally means "never
+  set" and keeps the default — a field marked `blankable` instead treats it as
+  "take this off the page", which is how the availability line and the social
+  links get turned off.
 - **Photos and documents** — `IMAGE_FIELDS` and `FILE_FIELDS`, same table. The
   value is a filename in the `site-assets` bucket; empty means the file bundled
   with the build.
@@ -134,6 +159,13 @@ opportunities. It overflowed onto the next column on iPad. Fixed by wrapping
 grid cells shrink (`min-w-0` — grid items default to `min-width: auto`), and by
 holding the stats at two columns until `lg`. Check new labels at 375, 768, 820
 and 1440.
+
+**The home loader's reads are independent — keep them in `Promise.all`.** They
+were written as six `await`s in a row, which cost six round trips in series
+before the page could render at all: 4.4s to first byte cold, 0.9–1.5s warm.
+Adding a seventh read means adding it to the array, not a line above it. Four of
+the six still query `site_content` separately; in parallel that costs one round
+trip, but it's the obvious thing to consolidate if the loader ever needs more.
 
 **The marquee needs exactly two copies of the logo set.** The animation travels
 -50%; three copies land the loop mid-set and the strip visibly snaps.

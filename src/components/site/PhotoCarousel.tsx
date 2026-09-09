@@ -16,11 +16,7 @@ export function PhotoCarousel({ photos }: { photos: { src: string; alt: string }
   }, [photos.length]);
 
   return (
-    // overflow-clip, not overflow-hidden: `hidden` makes this box a scroll
-    // container, and the parallax inside then measures its progress against
-    // this frame — which never scrolls — instead of the page. `clip` crops
-    // identically without creating one.
-    <div className="relative aspect-[4/5] w-full overflow-clip rounded-sm bg-secondary">
+    <div className="relative aspect-[4/5] w-full overflow-hidden rounded-sm bg-secondary">
       {photos.map((photo, i) => (
         <img
           key={photo.src}
@@ -29,8 +25,7 @@ export function PhotoCarousel({ photos }: { photos: { src: string; alt: string }
           width={1024}
           height={1280}
           loading={i === 0 ? "eager" : "lazy"}
-          // The frame clips; the photo drifts inside it as the page scrolls.
-          className={`parallax absolute inset-0 size-full object-cover transition-opacity duration-700 ${
+          className={`absolute inset-0 size-full object-cover transition-opacity duration-700 ${
             i === index ? "opacity-100" : "opacity-0"
           }`}
         />

@@ -123,55 +123,6 @@ body {
   }
 }
 
-/* Parallax without a scroll listener. A scroll-driven animation is handed to
-   the compositor, so it costs nothing on the main thread and can't stutter the
-   way a JS scroll handler does on a phone.
-
-   Everything sits inside @supports: where the timeline isn't understood the
-   image simply doesn't move, at its natural size and framing. Nothing is laid
-   out differently, so there is no fallback to get wrong. */
-@utility parallax {
-  @supports (animation-timeline: view()) {
-    /* Bigger than its frame, so the drift never pulls an edge into view.
-       The scale has to clear 1/(1 - 2 × drift) or the photo runs out of
-       overhang at the extremes: at 8% drift that floor is 1.19, and 1.24
-       leaves a real margin rather than the 2px that 1.2 was scraping by on.
-       Recompute this if the drift changes.
-
-       An earlier 4% against 1.12 measured 59px of travel spread over 1,600px
-       of scrolling — 3.6% slower than the page, which is below what anyone
-       notices. Restraint that lands at invisible is just cost. */
-    scale: 1.24;
-    /* Longhands, not the `animation` shorthand: the shorthand resets duration
-       to 0s, and a scroll-driven animation needs `auto` to mean "span the
-       whole timeline". With 0s it is applied and permanently frozen on its
-       first frame — which looks exactly like the feature not working. */
-    animation-name: parallax-drift;
-    animation-duration: auto;
-    animation-timing-function: linear;
-    animation-fill-mode: both;
-    animation-timeline: view();
-    animation-range: cover 0% cover 100%;
-  }
-
-  /* Someone who has asked their system for less motion has usually asked for
-     a reason — vestibular disorders make drifting backgrounds genuinely
-     unpleasant. They get the still image. */
-  @media (prefers-reduced-motion: reduce) {
-    scale: 1;
-    animation-name: none;
-  }
-}
-
-@keyframes parallax-drift {
-  from {
-    translate: 0 -8%;
-  }
-  to {
-    translate: 0 8%;
-  }
-}
-
 @utility marquee-track {
   display: flex;
   width: max-content;

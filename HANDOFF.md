@@ -205,24 +205,21 @@ Adding a seventh read means adding it to the array, not a line above it. Four of
 the six still query `site_content` separately; in parallel that costs one round
 trip, but it's the obvious thing to consolidate if the loader ever needs more.
 
-**Scroll-driven animation has two traps, and both look like "it just doesn't
-work".** The parallax on the hero and profile photos hit each in turn.
+**Parallax on the photos was built and then removed**, on 9 September 2026.
+Worth knowing before anyone builds it again. At a tasteful 4% drift nobody
+could see it — 59px of travel spread over 1,600px of scrolling is 3.6% slower
+than the page, below what registers. Raised to a visible 8%, it earned its
+keep even less: this site is read by recruiters who came from a CV link, and
+none of them decide anything because a photo drifted.
 
-First, never use the `animation` shorthand for one. The shorthand resets
-`animation-duration` to `0s`, and a scroll-driven animation needs `auto` to
-mean "span the whole timeline" — at `0s` it is applied, running, and frozen on
-its first frame. Use the longhands, `animation-duration: auto` included.
-
-Second, `overflow: hidden` on an ancestor makes that box a scroll container, so
-`view()` measures the subject against *it* rather than the page. A frame that
-never scrolls pins progress at exactly 50% forever. `overflow: clip` crops
-identically and creates no scroll container, which is why `PhotoCarousel` uses
-it. A constant 50% is the signature of this one.
-
-To check either, read `element.getAnimations()[0].currentTime` at two scroll
-positions — the computed `translate` alone doesn't tell you which trap you're
-in, and `transform` reads `none` because the keyframes animate the standalone
-`translate` property.
+If it is ever revisited, two things present as "it just doesn't work". The
+`animation` shorthand resets `animation-duration` to `0s`, and a scroll-driven
+animation needs `auto` to span its timeline — at `0s` it is applied, running
+and frozen on frame one. And `overflow: hidden` on an ancestor makes that box
+a scroll container, so `view()` measures against a frame that never scrolls
+and pins progress at exactly 50%; `overflow: clip` crops the same and creates
+no scroll container. Read `element.getAnimations()[0].currentTime` at two
+scroll positions to tell them apart — a constant 50% is the second one.
 
 **The marquee needs exactly two copies of the logo set.** The animation travels
 -50%; three copies land the loop mid-set and the strip visibly snaps.

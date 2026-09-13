@@ -4,7 +4,7 @@ Where the project stands and what to know before touching it. Read
 [PRD.md](PRD.md) first for what the site is and why it's built this way; this
 file is the state of play.
 
-Last updated: 9 September 2026.
+Last updated: 13 September 2026.
 
 ## Right now
 
@@ -39,11 +39,12 @@ Nothing is broken and nothing is half-finished. The test leads are gone, and
 both secrets that had been seen — the Telegram bot token and `ADMIN_PASSWORD` —
 were rotated on 9 September 2026.
 
-**A share image worth looking at.** Content → Page → Share image is empty, so
-the link preview falls back to Lovable's automatic screenshot of the whole page
-— legible at full size, a dark smudge at the size a card actually renders. A
-1200×630 image carrying the name, the role being looked for and a photograph
-would do the job the card is there to do. Publish, then re-scrape (below).
+**The share image is waiting on a publish and a re-scrape.** `public/og/share-card.jpg`
+ships with the build and `src/routes/index.tsx` emits it as the og:image
+whenever Content → Page → Share image is empty, so the link preview no longer
+depends on anyone remembering to pick a file — but a push only reaches the
+preview. Publish, then re-scrape at developers.facebook.com/tools/debug
+(below), or the old card keeps showing.
 
 **A domain of its own** is the one change left that would move the needle, and
 it is deliberately deferred rather than forgotten: it would replace the
@@ -258,7 +259,11 @@ served from an r2.dev path named after the commit — so the link preview is
 whatever the page happened to look like, at 1920×1080 rather than the 1200×630
 a card wants. Choosing an image under Content → Page → Share image emits a
 proper og:image *before* Lovable's, and a scraper takes the first one it
-finds. Leaving it unset falls back to the screenshot rather than nothing.
+finds. That tag is now always emitted: the back-office image when one is
+chosen, and `public/og/share-card.jpg` when it isn't, so Lovable's screenshot
+is never what a card shows. The card itself was drawn as HTML and screenshotted
+at 1200×630 in headless Chrome — the page's own tokens, Anton and Inter, so it
+reads as the same object as the site.
 
 **Facebook caches a scrape and will not refresh on its own.** A link that was
 shared before the tags were right keeps showing the old card indefinitely.

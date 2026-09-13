@@ -24,16 +24,21 @@ const TITLE = "Eddie Nakharin — Brand, Communications & Business Development";
 const DESCRIPTION =
   "18 years across advertising, branding, PR, events and business development. Portfolio, work experience and CV of Eddie Nakharin.";
 
+// The card a link preview shows, shipped with the build so it is right even
+// with an empty database — Content → Page → Share image overrides it. Absolute
+// because a scraper reads it away from the page.
+const SHARE_IMAGE = `${SITE_URL}/og/share-card.jpg`;
+
 export const Route = createFileRoute("/")({
   head: ({ loaderData }) => {
     const title = loaderData?.content["meta.title"] ?? TITLE;
     const description = loaderData?.content["meta.description"] ?? DESCRIPTION;
-    // Chosen in the back-office. Lovable appends its own og:image — a
-    // screenshot of whatever the site looked like at the last publish, under a
-    // URL that changes every time — after these tags, and a scraper takes the
-    // first one it finds. So setting this takes the preview over; leaving it
-    // unset keeps the automatic screenshot rather than showing nothing.
-    const share = loaderData?.images["meta.image"];
+    // Lovable appends its own og:image — a screenshot of whatever the site
+    // looked like at the last publish, under a URL that changes every time —
+    // after these tags, and a scraper takes the first one it finds. So the tag
+    // emitted here always wins: whatever is chosen in the back-office, and the
+    // shipped card when nothing is.
+    const share = loaderData?.images["meta.image"] ?? SHARE_IMAGE;
     return {
     meta: [
       { title },
@@ -43,16 +48,12 @@ export const Route = createFileRoute("/")({
       { property: "og:type", content: "profile" },
       { property: "og:url", content: SITE_URL },
       { name: "twitter:card", content: "summary_large_image" },
-      ...(share
-        ? [
-            { property: "og:image", content: share },
-            // Facebook lays out the card before the image arrives; without
-            // these it guesses, and a wide card can come back cropped square.
-            { property: "og:image:width", content: "1200" },
-            { property: "og:image:height", content: "630" },
-            { name: "twitter:image", content: share },
-          ]
-        : []),
+      { property: "og:image", content: share },
+      // Facebook lays out the card before the image arrives; without these it
+      // guesses, and a wide card can come back cropped square.
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { name: "twitter:image", content: share },
     ],
     };
   },

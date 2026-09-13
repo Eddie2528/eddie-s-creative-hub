@@ -12,6 +12,7 @@ import { SocialLinks } from "@/components/site/SocialLinks";
 import { PhotoCarousel } from "@/components/site/PhotoCarousel";
 import { Works } from "@/components/site/Works";
 import { ExperienceMarquee, RoleList } from "@/components/site/Experience";
+import { Track } from "@/components/site/Track";
 
 import eddieHero from "@/assets/eddie-hero.jpg";
 import eddieProfile from "@/assets/eddie-profile.jpg";
@@ -109,6 +110,7 @@ function Index() {
 
   return (
     <div className="grain min-h-screen">
+      <Track />
       <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
           <a href="#top" className="display text-lg tracking-wide">
@@ -127,7 +129,7 @@ function Index() {
             </a>
           </nav>
           <Button asChild variant="outline" size="sm">
-            <a href={CV_URL} download>
+            <a href={CV_URL} download data-track="cv_download">
               <Download className="size-4" />
               CV
             </a>
@@ -168,13 +170,13 @@ function Index() {
               <p>{content["hero.intro2"]}</p>
               <div className="flex flex-wrap gap-3 pt-2">
                 <LeadDialog content={content}>
-                  <Button size="lg" className="font-semibold">
+                  <Button size="lg" className="font-semibold" data-track="form_opened">
                     <Mail className="size-4" />
                     {content["cta.primary"]}
                   </Button>
                 </LeadDialog>
                 <Button asChild size="lg" variant="outline">
-                  <a href={CV_URL} download>
+                  <a href={CV_URL} download data-track="cv_download">
                     <Download className="size-4" />
                     {content["cta.secondary"]}
                   </a>
@@ -267,7 +269,7 @@ function Index() {
         </section>
 
         {/* CTA */}
-        <section className="border-t border-border py-[clamp(4rem,11vw,7rem)]">
+        <section id="contact" className="border-t border-border py-[clamp(4rem,11vw,7rem)]">
           <div className="mx-auto w-full max-w-6xl px-[clamp(1rem,4vw,2.5rem)] text-center">
             <h2 className="display text-[clamp(2.25rem,9vw,6rem)]">
               {content["cta.heading"]}
@@ -278,13 +280,13 @@ function Index() {
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
               <SocialLinks content={content} />
               <LeadDialog content={content}>
-                <Button size="lg" className="font-semibold">
+                <Button size="lg" className="font-semibold" data-track="form_opened">
                   {content["cta.primary"]}
                   <ArrowUpRight className="size-4" />
                 </Button>
               </LeadDialog>
               <Button asChild size="lg" variant="outline">
-                <a href={CV_URL} download>
+                <a href={CV_URL} download data-track="cv_download">
                   <Download className="size-4" />
                   {content["cta.secondary"]}
                 </a>
@@ -306,7 +308,7 @@ function Index() {
       <div className="fixed bottom-4 right-4 z-50 flex items-center gap-3 sm:bottom-6 sm:right-6 md:bottom-8 md:right-8">
         <SocialLinks content={content} floating />
         <LeadDialog content={content}>
-          <Button size="lg" className="rounded-full px-6 font-semibold shadow-lg">
+          <Button size="lg" className="rounded-full px-6 font-semibold shadow-lg" data-track="form_opened">
             <Mail className="size-4" />
             {content["cta.primary"]}
           </Button>

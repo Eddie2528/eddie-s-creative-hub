@@ -19,6 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ContentEditor } from "@/components/admin/ContentEditor";
 import { AssetManager } from "@/components/admin/AssetManager";
 import { WorksEditor } from "@/components/admin/WorksEditor";
+import { Activity } from "@/components/admin/Activity";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   adminDeleteLeads,
@@ -360,7 +361,12 @@ function AdminLeads() {
           <TabsTrigger value="content">Content</TabsTrigger>
           <TabsTrigger value="works">Works</TabsTrigger>
           <TabsTrigger value="files">Files</TabsTrigger>
+          <TabsTrigger value="activity">Activity</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="activity" className="mt-6">
+          <Activity />
+        </TabsContent>
 
         <TabsContent value="works" className="mt-6">
           <WorksEditor onSessionExpired={handleExpired} />

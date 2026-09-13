@@ -80,9 +80,22 @@ Facebook, Instagram and LinkedIn, on a 35/20/12 split of desktop, mobile and
 tablet. `/admin/leads` shows up in the page list; that's Eddie.
 
 What it cannot tell you is whether anyone downloaded the CV or reached the
-contact form. Those are a click and a scroll depth, and nothing on the page
-sends an event for either. Adding that means picking somewhere to send it to,
-which is a decision nobody has needed to make yet.
+contact form. Those are a click and a scroll depth, and the answer now comes
+from the site's own database instead of a third party's: `src/lib/site-events.ts`
+counts five moments — the visit, the work being looked at, the closing section
+being reached, the form being opened, the CV being downloaded — and the
+**Activity** tab draws them as a funnel over 7 and 30 days.
+
+It records no IP address, user agent or referrer. `visit` is a random id the
+page makes per tab session, kept in `sessionStorage`, and one visit can write
+only one row per name — a unique index enforces it — so every number reads as
+"visits that did this", not clicks. Eddie's own visits are skipped: the server
+function checks the admin cookie, which is httpOnly and so can only be seen
+from the server.
+
+**It needs migration 0008.** Until that is pasted into the SQL editor the page
+sends and the table isn't there to receive; the Activity tab says exactly that
+rather than drawing a screen of zeroes.
 
 ## Telling Eddie a lead arrived
 
@@ -126,6 +139,7 @@ a mechanism.
 | `0005_work_assets.sql` | per-work file overrides |
 | `0006_custom_works.sql` | campaign and kind, for works created in the back-office |
 | `0007_lead_attachments.sql` | attachment columns on `leads`, and the private `lead-files` bucket |
+| `0008_site_events.sql` | `site_events` — what visitors do, for the Activity tab |
 
 `20260906043550_*.sql` is Lovable's own copy of 0001, written when it applied it.
 
@@ -167,7 +181,7 @@ also why a broken query is invisible until you try to save.
 
 ## The back-office
 
-Four tabs behind one password at `/admin/leads`.
+Five tabs behind one password at `/admin/leads`.
 
 **Leads** — every enquiry, newest first. Rows tick, and a bar appears offering
 the three statuses and a delete across the whole selection; the tick boxes only
@@ -360,9 +374,10 @@ src/lib/
   admin-assets.ts     site-assets bucket: list, upload, delete
   admin-leads.ts      read leads, set status, delete, sign an attachment link
   submit-lead.ts      the contact form, the attachment, and the limits on it
+  site-events.ts      the five things counted, and the funnel the Activity tab draws
   notify-lead.ts      Telegram and email, one of each per lead
 
-src/components/site/   what a visitor sees
+src/components/site/   what a visitor sees (Track.tsx counts, renders nothing)
 src/components/admin/  one editor per tab
 src/routes/index.tsx        the page, and every meta tag a scraper reads
 src/routes/admin.leads.tsx  the back-office shell and the Leads tab

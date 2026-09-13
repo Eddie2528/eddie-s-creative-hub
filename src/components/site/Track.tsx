@@ -48,6 +48,19 @@ export function Track() {
     const visit = visitId();
     const sent = alreadySent();
 
+    // Where the visitor came from. The page has to send it: the request this
+    // makes carries the site's own address as the referer, not the one the
+    // visitor arrived from. Hostname only — which post they clicked isn't
+    // ours to keep — and empty when they typed the address or the link sent
+    // no referrer.
+    let ref = "";
+    try {
+      ref = document.referrer ? new URL(document.referrer).hostname : "";
+      if (ref === location.hostname) ref = "";
+    } catch {
+      ref = "";
+    }
+
     const track = (name: EventName) => {
       // Every event implies a visit, so ask for that one first. Normally it is
       // already sent and this returns immediately; when it isn't — a cold
@@ -63,7 +76,7 @@ export function Track() {
       // Deliberately not awaited. If it fails, it fails quietly — the same
       // rule the loaders follow — but it stops counting as sent, so the next
       // event on the page tries it again.
-      void recordEvent({ data: { name, visit } }).catch(() => {
+      void recordEvent({ data: { name, visit, ref } }).catch(() => {
         sent.delete(name);
         remember(sent);
       });

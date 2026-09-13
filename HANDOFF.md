@@ -95,9 +95,20 @@ only one row per name — a unique index enforces it — so every number reads a
 function checks the admin cookie, which is httpOnly and so can only be seen
 from the server.
 
-**It needs migration 0008.** Until that is pasted into the SQL editor the page
-sends and the table isn't there to receive; the Activity tab says exactly that
-rather than drawing a screen of zeroes.
+Migration 0009 adds the three things Lovable's tab shows and this one couldn't
+— where the visit came from, what kind of device, which country — recorded on
+the `visit` row only. The source is a hostname with no path (and Facebook's
+four hostnames collapse to one answer), the device is one of three words
+parsed from the user agent and never the agent itself, and the country is the
+two letters Cloudflare already puts on the request. Still no IP, and still
+nothing tied to anything but a random per-tab id.
+
+Lovable has no API for its own analytics — the numbers exist only in its
+editor — which is why these are counted again here rather than fetched.
+
+**It needs migrations 0008 and 0009.** Until they are pasted into the SQL
+editor the page sends and the table isn't there to receive; the Activity tab
+says exactly which one is missing rather than drawing a screen of zeroes.
 
 ## Telling Eddie a lead arrived
 
@@ -142,6 +153,7 @@ a mechanism.
 | `0006_custom_works.sql` | campaign and kind, for works created in the back-office |
 | `0007_lead_attachments.sql` | attachment columns on `leads`, and the private `lead-files` bucket |
 | `0008_site_events.sql` | `site_events` — what visitors do, for the Activity tab |
+| `0009_event_context.sql` | source, device and country on the visit row |
 
 `20260906043550_*.sql` is Lovable's own copy of 0001, written when it applied it.
 

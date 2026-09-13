@@ -48,7 +48,9 @@ makes one: run it in the Cloud SQL editor, copy the single cell, save it as
 `backups/YYYY-MM-DD-content.sql` outside the repo — `backups/README.md` has the
 procedure and what restoring does. What comes out is `insert … on conflict do
 update`, so restoring overwrites the rows it names and never deletes. Monthly
-is enough, and reading costs no credits. **Nobody has taken the first one yet.**
+is enough, and reading costs no credits. The first one was taken on 13
+September 2026: `backups/2026-09-13-content.sql`, 47 content rows and 39
+works, checked byte-for-byte against what the database produced.
 
 **A domain of its own** is the one change left that would move the needle, and
 it is deliberately deferred rather than forgotten: it would replace the

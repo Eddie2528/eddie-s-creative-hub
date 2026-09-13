@@ -1,5 +1,3 @@
-import { createServerFn } from "@tanstack/react-start";
-
 // Files people download from the site live in Cloud Storage, not the repo:
 // the repo is public and its history can't be rewritten (Lovable syncs it), so
 // anything committed there is committed forever. Storage can be replaced or
@@ -19,33 +17,14 @@ function publicUrl(object: string): string | null {
   return `${base.replace(/\/$/, "")}/storage/v1/object/public/${SITE_BUCKET}/${object}`;
 }
 
-// Resolved on the server because the browser has no Supabase env in production.
-// Going through a server function keeps the link correct in both SSR and
-// client-side navigation, and means replacing the file never touches the code.
-export const getCvUrl = createServerFn({ method: "GET" }).handler(async (): Promise<string> => {
-  // Whatever the back-office points at wins, so replacing the CV — under any
-  // filename — never needs a code change.
-  try {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data } = await (
-      supabaseAdmin as unknown as {
-        from(t: string): {
-          select(c: string): {
-            eq(col: string, val: string): {
-              maybeSingle(): PromiseLike<{ data: { value: string } | null }>;
-            };
-          };
-        };
-      }
-    )
-      .from("site_content")
-      .select("value")
-      .eq("key", "cv.file")
-      .maybeSingle();
-
-    if (data?.value) return publicUrl(data.value) ?? CV_FALLBACK;
-  } catch (cause) {
-    console.error("[cv] Falling back to the shipped file", cause);
-  }
-  return publicUrl(CV_OBJECT) ?? CV_FALLBACK;
-});
+// Resolved on the server because the browser has no Supabase env in production,
+// and shaped from rows the caller already read rather than a query of its own:
+// the CV lives in site_content beside the copy and the photos, and the page
+// reads that table once.
+//
+// Whatever the back-office points at wins, so replacing the CV — under any
+// filename — never needs a code change.
+export function cvUrlFrom(stored: Record<string, string>): string {
+  const chosen = stored["cv.file"];
+  return publicUrl(chosen || CV_OBJECT) ?? CV_FALLBACK;
+}

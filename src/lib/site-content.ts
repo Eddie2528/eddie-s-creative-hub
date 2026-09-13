@@ -223,13 +223,25 @@ async function contentTable() {
   return (supabaseAdmin as unknown as ContentTable).from("site_content");
 }
 
+// The one read of site_content. Everything the page needs out of this table —
+// copy, photos, the CV, roles, logos — is shaped from the rows it returns, so
+// the page asks for them once instead of once per thing. It throws; every
+// caller has its own fallback for that.
+export async function readContentRows(): Promise<ContentRow[]> {
+  const { data, error } = await (await contentTable()).select("key,value");
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export function rowsToRecord(rows: ContentRow[]): SiteContent {
+  return Object.fromEntries(rows.map((row) => [row.key, row.value]));
+}
+
 // Read by the page itself, so it must never throw: copy going missing should
 // show the built-in text, not an error page.
 export const getSiteContent = createServerFn({ method: "GET" }).handler(async (): Promise<SiteContent> => {
   try {
-    const { data, error } = await (await contentTable()).select("key,value");
-    if (error) throw new Error(error.message);
-    return mergeContent(Object.fromEntries((data ?? []).map((row) => [row.key, row.value])));
+    return mergeContent(rowsToRecord(await readContentRows()));
   } catch (cause) {
     console.error("[content] Using defaults; load failed", cause);
     return CONTENT_DEFAULTS;
@@ -265,23 +277,22 @@ export const adminSaveContent = createServerFn({ method: "POST" })
 
 // Image keys resolve to full URLs here rather than in the page: the browser has
 // no Supabase env in production, so it can't build a storage URL itself.
+export function imageUrls(stored: SiteContent): Record<string, string> {
+  const base = (process.env["SUPABASE_URL"] ?? "").replace(/\/$/, "");
+  if (!base) return {};
+
+  const out: Record<string, string> = {};
+  for (const field of IMAGE_FIELDS) {
+    const value = stored[field.key];
+    if (value) out[field.key] = `${base}/storage/v1/object/public/${SITE_BUCKET}/${value}`;
+  }
+  return out;
+}
+
 export const getSiteImages = createServerFn({ method: "GET" }).handler(
   async (): Promise<Record<string, string>> => {
     try {
-      const { data, error } = await (await contentTable()).select("key,value");
-      if (error) throw new Error(error.message);
-
-      const base = (process.env["SUPABASE_URL"] ?? "").replace(/\/$/, "");
-      if (!base) return {};
-
-      const wanted = new Set(IMAGE_FIELDS.map((field) => field.key));
-      const out: Record<string, string> = {};
-      for (const row of data ?? []) {
-        if (wanted.has(row.key) && row.value) {
-          out[row.key] = `${base}/storage/v1/object/public/${SITE_BUCKET}/${row.value}`;
-        }
-      }
-      return out;
+      return imageUrls(rowsToRecord(await readContentRows()));
     } catch (cause) {
       console.error("[content] Using built-in photos; image load failed", cause);
       return {};

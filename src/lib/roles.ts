@@ -66,19 +66,34 @@ function fromLegacyKeys(stored: Map<string, string>): Role[] | null {
   return touched ? roles : null;
 }
 
-async function loadRoles(): Promise<Role[]> {
-  try {
-    const { data, error } = await (await contentTable()).select("key,value");
-    if (error) throw new Error(error.message);
-
-    const stored = new Map((data ?? []).map((row) => [row.key, row.value]));
-
-    const raw = stored.get(ROLES_KEY);
-    if (raw) {
+// Shaped from rows the caller already has, so the page can read site_content
+// once and get roles out of the same trip. Unparseable JSON falls back here
+// rather than throwing: a broken roles blob shouldn't cost the caller the rest
+// of what it read.
+export function rolesFromRows(stored: Map<string, string>): Role[] {
+  const raw = stored.get(ROLES_KEY);
+  if (raw) {
+    try {
       const parsed = z.array(roleSchema).safeParse(JSON.parse(raw));
       if (parsed.success) return parsed.data;
+    } catch (cause) {
+      console.error("[roles] Stored list unreadable; using the built-in one", cause);
+      return DEFAULT_ROLES;
     }
-    return fromLegacyKeys(stored) ?? DEFAULT_ROLES;
+  }
+  return fromLegacyKeys(stored) ?? DEFAULT_ROLES;
+}
+
+// A role with nothing in it would render as an empty row on the site.
+export function visibleRoles(roles: Role[]): Role[] {
+  return roles.filter((role) => role.title || role.company);
+}
+
+async function loadRoles(): Promise<Role[]> {
+  try {
+    const { readContentRows } = await import("./site-content");
+    const rows = await readContentRows();
+    return rolesFromRows(new Map(rows.map((row) => [row.key, row.value])));
   } catch (cause) {
     console.error("[roles] Using the built-in list; load failed", cause);
     return DEFAULT_ROLES;
@@ -86,8 +101,7 @@ async function loadRoles(): Promise<Role[]> {
 }
 
 export const getRoles = createServerFn({ method: "GET" }).handler(async (): Promise<Role[]> => {
-  // A role with nothing in it would render as an empty row on the site.
-  return (await loadRoles()).filter((role) => role.title || role.company);
+  return visibleRoles(await loadRoles());
 });
 
 export const adminListRoles = createServerFn({ method: "POST" }).handler(async (): Promise<Role[]> => {

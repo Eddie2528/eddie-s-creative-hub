@@ -48,20 +48,34 @@ async function contentTable() {
   return (supabaseAdmin as unknown as ContentTable).from("site_content");
 }
 
-async function loadLogos(): Promise<Logo[]> {
-  try {
-    const { data, error } = await (await contentTable()).select("key,value");
-    if (error) throw new Error(error.message);
-    const stored = new Map((data ?? []).map((row) => [row.key, row.value]));
-
-    const raw = stored.get(LOGOS_KEY);
-    if (raw) {
+// Shaped from rows the caller already has, so the page can read site_content
+// once and get the logos out of the same trip.
+export function logosFromRows(stored: Map<string, string>): Logo[] {
+  const raw = stored.get(LOGOS_KEY);
+  if (raw) {
+    try {
       const parsed = z.array(logoSchema).safeParse(JSON.parse(raw));
       if (parsed.success) return parsed.data;
+    } catch (cause) {
+      console.error("[logos] Stored list unreadable; using the built-in one", cause);
+      return DEFAULT_LOGOS;
     }
-    // Logos used to be one content key per agency; anything chosen that way
-    // still counts, so upgrading doesn't reset the picks.
-    return DEFAULT_LOGOS.map((logo) => ({ ...logo, file: stored.get(`logo.${logo.id}`) ?? "" }));
+  }
+  // Logos used to be one content key per agency; anything chosen that way
+  // still counts, so upgrading doesn't reset the picks.
+  return DEFAULT_LOGOS.map((logo) => ({ ...logo, file: stored.get(`logo.${logo.id}`) ?? "" }));
+}
+
+// A logo with no file and no bundled artwork has nothing to show.
+export function resolveLogos(logos: Logo[]): ResolvedLogo[] {
+  return logos.map(resolve).filter((logo) => logo.src);
+}
+
+async function loadLogos(): Promise<Logo[]> {
+  try {
+    const { readContentRows } = await import("./site-content");
+    const rows = await readContentRows();
+    return logosFromRows(new Map(rows.map((row) => [row.key, row.value])));
   } catch (cause) {
     console.error("[logos] Using the built-in list; load failed", cause);
     return DEFAULT_LOGOS;
@@ -79,12 +93,7 @@ function resolve(logo: Logo): ResolvedLogo {
 }
 
 export const getLogos = createServerFn({ method: "GET" }).handler(
-  async (): Promise<ResolvedLogo[]> => {
-    // A logo with no file and no bundled artwork has nothing to show.
-    return (await loadLogos())
-      .map(resolve)
-      .filter((logo) => logo.src);
-  },
+  async (): Promise<ResolvedLogo[]> => resolveLogos(await loadLogos()),
 );
 
 export const adminListLogos = createServerFn({ method: "POST" }).handler(async (): Promise<Logo[]> => {

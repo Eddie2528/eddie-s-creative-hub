@@ -1,11 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { getCvUrl } from "@/lib/site-assets";
 import { SITE_URL } from "@/lib/site-url";
-import { getSiteContent, getSiteImages } from "@/lib/site-content";
+import { getPageData } from "@/lib/page-data";
 import { getCampaigns } from "@/lib/works";
-import { getRoles } from "@/lib/roles";
-import { getLogos } from "@/lib/logos";
 import { ArrowUpRight, Download, Mail } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -56,19 +53,15 @@ export const Route = createFileRoute("/")({
     ],
     };
   },
-  // Six independent reads. Awaited one after another the page couldn't render
-  // until all six round trips had finished in series — measured at 4.4s to
-  // first byte on a cold worker, 0.9–1.5s warm. Nothing here depends on
-  // anything else here, so they go together.
+  // Two reads, one per table. Five of these used to be separate queries of
+  // site_content — copy, photos, the CV, roles, logos — which is why the page
+  // could come back with the copy from the database and the photos from the
+  // fallbacks; getPageData shapes all five from a single select, so they
+  // arrive together or not at all. The two that are left are independent, and
+  // awaiting them in series only delays the render.
   loader: async () => {
-    const [cvUrl, content, images, campaigns, roles, logos] = await Promise.all([
-      getCvUrl(),
-      getSiteContent(),
-      getSiteImages(),
-      getCampaigns(),
-      getRoles(),
-      getLogos(),
-    ]);
+    const [page, campaigns] = await Promise.all([getPageData(), getCampaigns()]);
+    const { cvUrl, content, images, roles, logos } = page;
     return { cvUrl, content, images, campaigns, roles, logos };
   },
   component: Index,

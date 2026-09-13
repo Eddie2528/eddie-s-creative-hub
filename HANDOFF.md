@@ -39,12 +39,16 @@ Nothing is broken and nothing is half-finished. The test leads are gone, and
 both secrets that had been seen — the Telegram bot token and `ADMIN_PASSWORD` —
 were rotated on 9 September 2026.
 
-**The share image is waiting on a publish and a re-scrape.** `public/og/share-card.jpg`
-ships with the build and `src/routes/index.tsx` emits it as the og:image
-whenever Content → Page → Share image is empty, so the link preview no longer
-depends on anyone remembering to pick a file — but a push only reaches the
-preview. Publish, then re-scrape at developers.facebook.com/tools/debug
-(below), or the old card keeps showing.
+**The content has no backup but the one you take.** Every role, campaign,
+ordering, logo pick and line of copy lives in `site_content` and `site_works`
+and nowhere else; deleting the wrong thing in the back-office drops the site
+back to the defaults in the code, which are no longer what the site says. There
+is no undo and no snapshot. `supabase/export-content.sql` is the query that
+makes one: run it in the Cloud SQL editor, copy the single cell, save it as
+`backups/YYYY-MM-DD-content.sql` outside the repo — `backups/README.md` has the
+procedure and what restoring does. What comes out is `insert … on conflict do
+update`, so restoring overwrites the rows it names and never deletes. Monthly
+is enough, and reading costs no credits. **Nobody has taken the first one yet.**
 
 **A domain of its own** is the one change left that would move the needle, and
 it is deliberately deferred rather than forgotten: it would replace the
@@ -52,6 +56,33 @@ it is deliberately deferred rather than forgotten: it would replace the
 badge, and verifying it in Resend would let the notification email come from
 Eddie rather than `onboarding@resend.dev`. Revisit it when the link starts
 going to people who matter.
+
+## Being found
+
+Search isn't what this site is for — the traffic comes from a CV, a LinkedIn
+profile and links Eddie sends — so nothing here is tuned for ranking. But
+`public/robots.txt` invites every crawler in, and until 13 September there was
+nothing to point them at. `public/sitemap.xml` is that: one `<url>`, the home
+page, with a `Sitemap:` line in robots.txt. It costs nothing and means Google
+finds the page on its own schedule rather than never.
+
+Both files spell the site's address out in full — they are static and can't
+import `SITE_URL` — so moving the site means changing them too. `site-url.ts`
+says so at the top.
+
+## Who turns up
+
+Lovable's own **Analytics** tab counts visitors, pageviews, sources, devices
+and countries with no code on the page and no third-party script — open it in
+the editor. The first eleven days to 13 September 2026: 67 visitors, 337
+pageviews, almost all from Thailand, roughly half direct and the rest from
+Facebook, Instagram and LinkedIn, on a 35/20/12 split of desktop, mobile and
+tablet. `/admin/leads` shows up in the page list; that's Eddie.
+
+What it cannot tell you is whether anyone downloaded the CV or reached the
+contact form. Those are a click and a scroll depth, and nothing on the page
+sends an event for either. Adding that means picking somewhere to send it to,
+which is a decision nobody has needed to make yet.
 
 ## Telling Eddie a lead arrived
 
@@ -230,12 +261,18 @@ grid cells shrink (`min-w-0` — grid items default to `min-width: auto`), and b
 holding the stats at two columns until `lg`. Check new labels at 375, 768, 820
 and 1440.
 
-**The home loader's reads are independent — keep them in `Promise.all`.** They
-were written as six `await`s in a row, which cost six round trips in series
-before the page could render at all: 4.4s to first byte cold, 0.9–1.5s warm.
-Adding a seventh read means adding it to the array, not a line above it. Four of
-the six still query `site_content` separately; in parallel that costs one round
-trip, but it's the obvious thing to consolidate if the loader ever needs more.
+**The home loader makes two reads, one per table — keep it that way.** It was
+six `await`s in a row once, six round trips in series before the page could
+render at all: 4.4s to first byte cold, 0.9–1.5s warm. `Promise.all` fixed the
+waiting; it didn't fix that five of the six were separate `select`s of the same
+`site_content` table — copy, photos, the CV, roles, logos — which is five
+chances for one to come back empty while the rest succeed. That is what put a
+stranger's photo on the page (above). `getPageData` in `src/lib/page-data.ts`
+now shapes all five from one read, so they arrive together or fall back
+together, and the page can no longer be half true. Anything else the page needs
+out of `site_content` belongs in that function, not in a read of its own — the
+back-office keeps its own per-thing server functions, which is fine, it asks
+for one thing at a time.
 
 **Parallax on the photos was built and then removed**, on 9 September 2026.
 Worth knowing before anyone builds it again. At a tasteful 4% drift nobody
@@ -285,6 +322,12 @@ turns that from invisible into a stranger's face on Eddie's portfolio under his
 own name. `eddie-hero.jpg` and `eddie-profile.jpg` are Eddie now, and every
 other slot ships no fallback at all, so the quiet path can only ever show him.
 
+Those two photos are in a public repo whose history can't be rewritten, so they
+are there for good. That is the trade and it is worth it: they are the same
+photographs the site already serves to anyone who opens it, and a fallback that
+isn't in the build isn't a fallback. Don't extend the reasoning to anything the
+site doesn't already publish.
+
 **The marquee needs exactly two copies of the logo set.** The animation travels
 -50%; three copies land the loop mid-set and the strip visibly snaps.
 
@@ -306,6 +349,7 @@ other slot ships no fallback at all, so the quiet path can only ever show him.
 
 ```
 src/lib/
+  page-data.ts        the home page's one read of site_content, shaped five ways
   site-content.ts     copy, photo and document fields + their server functions
   works.ts            campaigns, ordering, per-piece overrides
   works-catalogue.ts  the built-in list of work

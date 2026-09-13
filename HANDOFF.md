@@ -271,6 +271,20 @@ Paste the URL into developers.facebook.com/tools/debug and press Scrape Again
 after changing anything a card shows. The tags being correct in `curl` says
 nothing about what Facebook is still holding.
 
+**The built-in photos have to be photos of Eddie.** On 13 September a visitor
+who followed the share card landed on a hero showing a different man — the
+scaffold's stock portraits, which had sat in `src/assets/` as the fallback
+since the first build. Nothing had broken: `getSiteImages` catches its own
+failure and returns `{}`, and an empty images map is indistinguishable from
+"nothing has been chosen", so the page fell back exactly as designed. The copy
+on that same render came from the database, which is what rules out the
+connection being down — one read of the six was lost, not all of them. It was
+not reproducible afterwards; a cold worker losing one of six parallel queries
+is the likeliest account. Reading fails quietly, and a wrong default is what
+turns that from invisible into a stranger's face on Eddie's portfolio under his
+own name. `eddie-hero.jpg` and `eddie-profile.jpg` are Eddie now, and every
+other slot ships no fallback at all, so the quiet path can only ever show him.
+
 **The marquee needs exactly two copies of the logo set.** The animation travels
 -50%; three copies land the loop mid-set and the strip visibly snaps.
 

@@ -16,9 +16,8 @@ import { PhotoCarousel } from "@/components/site/PhotoCarousel";
 import { Works } from "@/components/site/Works";
 import { ExperienceMarquee, RoleList } from "@/components/site/Experience";
 
-import eddie1 from "@/assets/eddie-1.jpg";
-import eddie2 from "@/assets/eddie-2.jpg";
-import eddie3 from "@/assets/eddie-3.jpg";
+import eddieHero from "@/assets/eddie-hero.jpg";
+import eddieProfile from "@/assets/eddie-profile.jpg";
 
 const TITLE = "Eddie Nakharin — Brand, Communications & Business Development";
 const DESCRIPTION =
@@ -77,15 +76,20 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   const { cvUrl: CV_URL, content, images, campaigns, roles, logos } = Route.useLoaderData();
+  // The fallbacks have to be Eddie. They stand in whenever the image read
+  // comes back empty — a cold worker losing one of the loader's six queries is
+  // enough — and the scaffold's stock photos were a different man entirely, so
+  // a hiccup put a stranger's face on his portfolio under his own name. A
+  // fallback that is simply an older photo of Eddie can't do that.
   const heroSlots = [
-    { key: "hero.photo1", fallback: eddie1, alt: "Portrait of Eddie Nakharin" },
-    { key: "hero.photo2", fallback: eddie2, alt: "Eddie presenting brand strategy to a team" },
-    { key: "hero.photo3", fallback: eddie3, alt: "Eddie on a rooftop in Bangkok at dusk" },
+    { key: "hero.photo1", fallback: eddieHero, alt: "Eddie Nakharin" },
+    { key: "hero.photo2", fallback: null, alt: "Eddie Nakharin" },
+    { key: "hero.photo3", fallback: null, alt: "Eddie Nakharin" },
     { key: "hero.photo4", fallback: null, alt: "Eddie Nakharin" },
     { key: "hero.photo5", fallback: null, alt: "Eddie Nakharin" },
   ];
   const profileSlots = [
-    { key: "profile.photo", fallback: eddie2, alt: "Eddie Nakharin leading a workshop" },
+    { key: "profile.photo", fallback: eddieProfile, alt: "Eddie Nakharin" },
     { key: "profile.photo2", fallback: null, alt: "Eddie Nakharin" },
     { key: "profile.photo3", fallback: null, alt: "Eddie Nakharin" },
     { key: "profile.photo4", fallback: null, alt: "Eddie Nakharin" },

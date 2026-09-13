@@ -106,7 +106,24 @@ nothing tied to anything but a random per-tab id.
 Lovable has no API for its own analytics — the numbers exist only in its
 editor — which is why these are counted again here rather than fetched.
 
-**It needs migrations 0008 and 0009.** Until they are pasted into the SQL
+**Channel is worked out when the summary is read, not when the row is
+written**, so changing what counts as social re-buckets everything already
+recorded rather than only what comes next. A hostname falls into Social,
+Search or Referral; no referrer at all is Direct.
+
+**Direct is not a mystery, it is an untagged link.** A PDF, an email, LINE and
+a QR code all send no referrer, and those are exactly the links Eddie sends on
+purpose — so `?utm_source=cv` on the address wherever he puts it makes that
+visit its own channel, named whatever he called it. `utm_source` lands in
+`source` (it answers the same question, better) and `utm_campaign` in
+`campaign`.
+
+That is also why `tidySource` must never collapse a hostname to a bare word:
+a source with no dot in it is how a tag is told apart from a site. An early
+version turned google.co.th into "google" and the summary read it as a
+channel Eddie had named himself.
+
+**It needs migrations 0008, 0009 and 0010.** Until they are pasted into the SQL
 editor the page sends and the table isn't there to receive; the Activity tab
 says exactly which one is missing rather than drawing a screen of zeroes.
 
@@ -154,6 +171,7 @@ a mechanism.
 | `0007_lead_attachments.sql` | attachment columns on `leads`, and the private `lead-files` bucket |
 | `0008_site_events.sql` | `site_events` — what visitors do, for the Activity tab |
 | `0009_event_context.sql` | source, device and country on the visit row |
+| `0010_event_campaign.sql` | `campaign`, for links tagged with `?utm_campaign=` |
 
 `20260906043550_*.sql` is Lovable's own copy of 0001, written when it applied it.
 

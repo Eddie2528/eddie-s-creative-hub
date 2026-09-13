@@ -202,17 +202,34 @@ export function Activity() {
         <>
           <div className="grid gap-4 lg:grid-cols-2">
             <Funnel counts={shown.counts} />
-            <Split title="Where they came from" rows={shown.source} />
+            <Split title="Channel" rows={shown.channel} />
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            <Split title="Device" rows={shown.device} />
+            <Split title="Where they came from" rows={shown.source} />
+            {/* Only worth a box once a tagged link has actually been sent. */}
+            {shown.campaign.length > 0 ? (
+              <Split title="Campaign" rows={shown.campaign} />
+            ) : (
+              <Split title="Device" rows={shown.device} />
+            )}
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            {shown.campaign.length > 0 ? <Split title="Device" rows={shown.device} /> : null}
             <Split title="Country" rows={shown.country} format={countryLabel} />
           </div>
           <p className="text-xs text-muted-foreground">
             A visit is one tab session. Someone who comes back tomorrow counts twice; someone who
             presses the CV button twice counts once. Nothing older than 30 days is read here, and
-            the three breakdowns only cover visits — the source is a hostname with no path, the
-            device is one of three words, and the country is what the request already carried.
+            the breakdowns cover visits only — the source is a hostname with no path, the device is
+            one of three words, and the country is what the request already carried.
+            <br />
+            <br />
+            <span className="font-medium text-foreground">Direct isn’t a mystery, it’s an untagged
+            link.</span>{" "}
+            A PDF, an email, LINE and a QR code all send no referrer, so they land there together.
+            Add <code>?utm_source=cv</code> — or <code>?utm_source=linkedin</code>,{" "}
+            <code>?utm_source=email</code> — to the address wherever you put it, and those visits
+            arrive under that name instead, as their own channel.
           </p>
         </>
       ) : null}

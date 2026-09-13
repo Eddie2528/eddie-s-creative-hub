@@ -61,6 +61,21 @@ export function Track() {
       ref = "";
     }
 
+    // ?utm_source= on a link Eddie sent himself. The links that matter most —
+    // the address printed on the CV, one pasted into an email — carry no
+    // referrer at all, so without a tag they are indistinguishable from
+    // someone typing the address in.
+    let utmSource = "";
+    let utmCampaign = "";
+    try {
+      const params = new URLSearchParams(location.search);
+      utmSource = (params.get("utm_source") ?? "").slice(0, 60);
+      utmCampaign = (params.get("utm_campaign") ?? "").slice(0, 60);
+    } catch {
+      utmSource = "";
+      utmCampaign = "";
+    }
+
     const track = (name: EventName) => {
       // Every event implies a visit, so ask for that one first. Normally it is
       // already sent and this returns immediately; when it isn't — a cold
@@ -76,7 +91,7 @@ export function Track() {
       // Deliberately not awaited. If it fails, it fails quietly — the same
       // rule the loaders follow — but it stops counting as sent, so the next
       // event on the page tries it again.
-      void recordEvent({ data: { name, visit, ref } }).catch(() => {
+      void recordEvent({ data: { name, visit, ref, utmSource, utmCampaign } }).catch(() => {
         sent.delete(name);
         remember(sent);
       });

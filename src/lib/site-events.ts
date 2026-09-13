@@ -27,7 +27,9 @@ export type Breakdown = { label: string; value: number }[];
 
 export type EventWindow = {
   counts: EventCounts;
+  channel: Breakdown;
   source: Breakdown;
+  campaign: Breakdown;
   device: Breakdown;
   country: Breakdown;
 };
@@ -49,6 +51,7 @@ type EventRow = {
   source?: string | null;
   device?: string | null;
   country?: string | null;
+  campaign?: string | null;
 };
 
 type EventsTable = {
@@ -88,6 +91,37 @@ function deviceFrom(agent: string): "mobile" | "tablet" | "desktop" {
   return "desktop";
 }
 
+// Five buckets, worked out when the summary is read rather than when the row
+// is written, so changing what counts as social re-buckets everything already
+// recorded instead of only what comes next.
+//
+// A tagged visit becomes its own channel, named whatever Eddie called it —
+// "cv", "email", "qr". Those links arrive with no referrer at all and would
+// otherwise pile into Direct, which is the bucket that tells him least, and
+// the point of tagging one is to see it on its own.
+const SOCIAL = [
+  "facebook.com",
+  "instagram.com",
+  "linkedin.com",
+  "x.com",
+  "twitter.com",
+  "tiktok.com",
+  "youtube.com",
+  "line.me",
+  "t.co",
+];
+const SEARCH = /(^|\.)(google|bing|duckduckgo|ecosia|yandex|baidu|yahoo)\./;
+
+function channelOf(source: string | null | undefined, tagged: boolean): string {
+  if (!source) return "Direct";
+  if (source === "Direct") return "Direct";
+  // A tag is Eddie's own word for a channel, so it is the answer as typed.
+  if (tagged) return source;
+  if (SOCIAL.includes(source)) return "Social";
+  if (SEARCH.test(source)) return "Search";
+  return "Referral";
+}
+
 // A hostname, never a path: "linkedin.com" is worth knowing, which post
 // someone clicked from isn't ours to keep. Facebook and Instagram each arrive
 // under several hostnames; they're the same answer to "where from".
@@ -97,7 +131,10 @@ function tidySource(host: string): string {
   if (/(^|\.)facebook\.com$|^l\.facebook|^lm\.facebook|^m\.facebook/.test(clean)) return "facebook.com";
   if (/(^|\.)instagram\.com$|^l\.instagram/.test(clean)) return "instagram.com";
   if (/(^|\.)linkedin\.com$|^lnkd\.in$/.test(clean)) return "linkedin.com";
-  if (/(^|\.)google\./.test(clean)) return "google";
+  // Deliberately no collapsing of search engines to a bare word: a source
+  // without a dot is how a utm tag is told apart from a hostname, and
+  // "google" would have been indistinguishable from someone tagging a link
+  // that way. google.co.th and google.com both read as Search anyway.
   return clean;
 }
 
@@ -117,6 +154,11 @@ export const recordEvent = createServerFn({ method: "POST" })
       // visitor arrived from. Empty means they typed it, or came from a link
       // that sends no referrer at all.
       ref: z.string().max(120).optional(),
+      // Only what a tagged link carries. utm_source answers the same question
+      // as the referrer and answers it better, so it wins; utm_campaign is the
+      // round of sending within that channel.
+      utmSource: z.string().max(60).optional(),
+      utmCampaign: z.string().max(60).optional(),
     }),
   )
   .handler(async ({ data }): Promise<{ ok: true }> => {
@@ -140,7 +182,11 @@ export const recordEvent = createServerFn({ method: "POST" })
         const agent = getRequestHeader("user-agent") ?? "";
         const country = (getRequestHeader("cf-ipcountry") ?? "").toUpperCase();
 
-        row["source"] = tidySource(data.ref ?? "");
+        // A tag beats a referrer: Eddie put it there on purpose, and the links
+        // worth telling apart are exactly the ones that arrive without one.
+        const tag = (data.utmSource ?? "").trim().toLowerCase();
+        row["source"] = tag ? tag : tidySource(data.ref ?? "");
+        row["campaign"] = (data.utmCampaign ?? "").trim().toLowerCase() || null;
         row["device"] = deviceFrom(agent);
         row["country"] = /^[A-Z]{2}$/.test(country) && country !== "XX" && country !== "T1"
           ? country
@@ -158,7 +204,7 @@ export const recordEvent = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-function tally(rows: EventRow[], field: "source" | "device" | "country"): Breakdown {
+function tally(rows: EventRow[], field: "source" | "device" | "country" | "campaign"): Breakdown {
   const counts = new Map<string, number>();
   for (const row of rows) {
     const value = row[field];
@@ -177,9 +223,23 @@ function summarise(rows: EventRow[]): EventWindow {
     if (name in counts) counts[name] += 1;
   }
   const visits = rows.filter((row) => row.name === "visit");
+
+  const channels = new Map<string, number>();
+  for (const visit of visits) {
+    // A row carrying a campaign came in tagged; so did one whose source isn't
+    // a hostname, which is what a bare ?utm_source= leaves behind.
+    const tagged = Boolean(visit.campaign) || Boolean(visit.source && !visit.source.includes("."));
+    const channel = channelOf(visit.source, tagged && visit.source !== "Direct");
+    channels.set(channel, (channels.get(channel) ?? 0) + 1);
+  }
+
   return {
     counts,
+    channel: [...channels.entries()]
+      .map(([label, value]) => ({ label, value }))
+      .sort((a, b) => b.value - a.value),
     source: tally(visits, "source"),
+    campaign: tally(visits, "campaign"),
     device: tally(visits, "device"),
     country: tally(visits, "country"),
   };

@@ -49,12 +49,24 @@ export function Track() {
     const sent = alreadySent();
 
     const track = (name: EventName) => {
+      // Every event implies a visit, so ask for that one first. Normally it is
+      // already sent and this returns immediately; when it isn't — a cold
+      // worker, or the table not existing yet — this is the second chance.
+      // Without it a lost visit row leaves the funnel dividing by too little
+      // and a step reading over 100%, which is the kind of wrong number you
+      // can't tell from a right one later.
+      if (name !== "visit") track("visit");
+
       if (sent.has(name)) return;
       sent.add(name);
       remember(sent);
       // Deliberately not awaited. If it fails, it fails quietly — the same
-      // rule the loaders follow.
-      void recordEvent({ data: { name, visit } }).catch(() => {});
+      // rule the loaders follow — but it stops counting as sent, so the next
+      // event on the page tries it again.
+      void recordEvent({ data: { name, visit } }).catch(() => {
+        sent.delete(name);
+        remember(sent);
+      });
     };
 
     track("visit");

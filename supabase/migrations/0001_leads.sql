@@ -40,3 +40,13 @@ create policy "authenticated can update leads"
   to authenticated
   using (true)
   with check (true);
+
+-- NOTE (security): the original permissive grants and policies below were removed.
+-- They granted SELECT/UPDATE on public.leads to the `authenticated` role and an
+-- anon INSERT policy, which exposed lead PII to any signed-up user.
+-- The leads table is now service-role only; see the lockdown migrations.
+-- Do NOT reintroduce blanket `authenticated` access. If a per-owner view is ever
+-- needed, add a narrowly scoped policy matching the owner's user_id.
+grant all on public.leads to service_role;
+alter table public.leads enable row level security;
+alter table public.leads force row level security;

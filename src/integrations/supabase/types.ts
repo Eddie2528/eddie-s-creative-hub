@@ -16,6 +16,10 @@ export type Database = {
     Tables: {
       leads: {
         Row: {
+          attachment_name: string | null
+          attachment_path: string | null
+          attachment_size: number | null
+          attachment_type: string | null
           created_at: string
           email: string
           id: string
@@ -26,6 +30,10 @@ export type Database = {
           status: string
         }
         Insert: {
+          attachment_name?: string | null
+          attachment_path?: string | null
+          attachment_size?: number | null
+          attachment_type?: string | null
           created_at?: string
           email: string
           id?: string
@@ -36,6 +44,10 @@ export type Database = {
           status?: string
         }
         Update: {
+          attachment_name?: string | null
+          attachment_path?: string | null
+          attachment_size?: number | null
+          attachment_type?: string | null
           created_at?: string
           email?: string
           id?: string
@@ -44,6 +56,96 @@ export type Database = {
           phone?: string
           source?: string | null
           status?: string
+        }
+        Relationships: []
+      }
+      site_content: {
+        Row: {
+          key: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
+      site_events: {
+        Row: {
+          campaign: string | null
+          country: string | null
+          created_at: string
+          device: string | null
+          id: string
+          name: string
+          source: string | null
+          visit: string
+        }
+        Insert: {
+          campaign?: string | null
+          country?: string | null
+          created_at?: string
+          device?: string | null
+          id?: string
+          name: string
+          source?: string | null
+          visit: string
+        }
+        Update: {
+          campaign?: string | null
+          country?: string | null
+          created_at?: string
+          device?: string | null
+          id?: string
+          name?: string
+          source?: string | null
+          visit?: string
+        }
+        Relationships: []
+      }
+      site_works: {
+        Row: {
+          asset: string | null
+          campaign: string | null
+          category: string
+          id: string
+          kind: string | null
+          poster: string | null
+          sort: number
+          title: string
+          updated_at: string
+          visible: boolean
+        }
+        Insert: {
+          asset?: string | null
+          campaign?: string | null
+          category: string
+          id: string
+          kind?: string | null
+          poster?: string | null
+          sort?: number
+          title: string
+          updated_at?: string
+          visible?: boolean
+        }
+        Update: {
+          asset?: string | null
+          campaign?: string | null
+          category?: string
+          id?: string
+          kind?: string | null
+          poster?: string | null
+          sort?: number
+          title?: string
+          updated_at?: string
+          visible?: boolean
         }
         Relationships: []
       }

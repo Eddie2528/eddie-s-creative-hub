@@ -22,6 +22,12 @@ create index if not exists leads_status_idx     on public.leads (status);
 -- The leads table is now service-role only; see the lockdown migrations.
 -- Do NOT reintroduce blanket `authenticated` access. If a per-owner view is ever
 -- needed, add a narrowly scoped policy matching the owner's user_id.
+
+-- NOTE (security): the original permissive grants/policies were removed.
+-- They granted SELECT/UPDATE on public.leads to `authenticated` and allowed anon
+-- INSERT, exposing lead PII to any signed-up user. Leads are service-role only.
+-- Do NOT reintroduce blanket `authenticated` access. If a per-owner view is ever
+-- needed, scope the policy to the owner's user_id.
 grant all on public.leads to service_role;
 alter table public.leads enable row level security;
 alter table public.leads force row level security;

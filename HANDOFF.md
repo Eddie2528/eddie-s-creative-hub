@@ -53,7 +53,8 @@ September 2026: `backups/2026-09-13-content.sql`, 47 content rows and 39
 works, checked byte-for-byte against what the database produced.
 
 **A domain of its own** is the one change left that would move the needle, and
-it is deliberately deferred rather than forgotten: it would replace the
+it is deliberately deferred rather than forgotten — note that Lovable puts Add
+domain behind Pro, so this one costs a plan, not just an afternoon: it would replace the
 `.lovable.app` link on the CV, it is what removes the "Edit with Lovable"
 badge, and verifying it in Resend would let the notification email come from
 Eddie rather than `onboarding@resend.dev`. Revisit it when the link starts

@@ -4,7 +4,7 @@ Where the project stands and what to know before touching it. Read
 [PRD.md](PRD.md) first for what the site is and why it's built this way; this
 file is the state of play.
 
-Last updated: 13 September 2026.
+Last updated: 16 September 2026.
 
 ## Right now
 
@@ -281,22 +281,34 @@ blacks; the key visuals were converted with Pillow using relative colorimetric
 and *no* black point compensation, which preserves a lit studio backdrop instead
 of mapping it to black.
 
-**The security scan's storage finding is a false positive.** It reports
-"Public storage bucket allows unrestricted file uploads and deletions" because
-`storage.objects` carries no RLS policies — and reads that as unrestricted. It's
-the opposite: RLS is enabled (`relrowsecurity = true`) with zero policies, which
-in PostgreSQL denies every operation to `anon` and `authenticated`. Uploads work
-because server functions hold the service role, which bypasses RLS, and public
-reads go through the public object endpoint, which doesn't consult it. Adding
-policies to "fix" this would *open* what is currently shut. Verify with:
+**The security scan's storage finding is a false positive, and it cannot be
+satisfied.** It reports that `storage.objects` has no RLS policies and reads
+that as unrestricted. It was the opposite: RLS enabled with zero policies
+denies every operation to `anon` and `authenticated` in PostgreSQL. Uploads
+work because server functions hold the service role, which bypasses RLS, and
+public reads go through the public object endpoint, which doesn't consult it.
+
+On 15 September the fix was run anyway, through Lovable's own chat. There are
+now four policies on `storage.objects` — deny for `lead-files`, `ALL` for
+`service_role` on both buckets, and `SELECT` for `anon` on `site-assets`. The
+last one is the only real change: the public bucket's contents can now be
+*listed* through the storage API by anyone holding the publishable key, where
+before they could only be fetched by exact name. Nothing became writable.
+
+**And the scan still reports it.** It said "no RLS policies configured" again
+on 16 September, with four policies in place — so it is not reading them, and
+no amount of fixing will clear it. Press Ignore, don't fix it twice. The same
+goes for "Later migration re-opens leads table": no migration file has granted
+`authenticated` anything since 15 September — check with
+`grep -rn "to authenticated" supabase/migrations/`.
+
+What the database actually says, which is the thing to trust:
 
 ```sql
-select relrowsecurity from pg_class where oid = 'storage.objects'::regclass;
 select policyname, cmd, roles from pg_policies
 where schemaname = 'storage' and tablename = 'objects';
+select has_table_privilege('anon', 'public.leads', 'SELECT');  -- false
 ```
-
-Expected: `true`, and no rows.
 
 **Tracked-out labels overflow their column before they wrap.** `hairline` adds
 0.28em of letter-spacing, so a label is far wider than it looks — and a token
@@ -373,6 +385,16 @@ are there for good. That is the trade and it is worth it: they are the same
 photographs the site already serves to anyone who opens it, and a fallback that
 isn't in the build isn't a fallback. Don't extend the reasoning to anything the
 site doesn't already publish.
+
+**A server function reports a thrown error to its caller, message and all.**
+The contact form's handler used to `throw new Error(\`Failed to save lead:
+${error.message}\`)`, which put the Postgres message — table, column, often the
+constraint it tripped — into the response a visitor's browser received. The
+form showed friendly text; the raw detail sat in the network tab underneath it.
+`submitLead` now returns `{ ok: false, reason: "save_failed" }` and the whole
+handler sits in a catch that does the same for anything else that throws, so
+nothing internal can escape by a route nobody thought about. The reason goes to
+the log, where it is useful and unreachable.
 
 **The marquee needs exactly two copies of the logo set.** The animation travels
 -50%; three copies land the loop mid-set and the strip visibly snaps.

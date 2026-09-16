@@ -53,7 +53,7 @@ export type LeadInput = z.infer<typeof leadInput>;
 
 export type SubmitLeadResult =
   | { ok: true; attachmentStored?: boolean }
-  | { ok: false; reason: "too_fast" | "file_too_large" | "file_type" };
+  | { ok: false; reason: "too_fast" | "file_too_large" | "file_type" | "save_failed" };
 
 // Storage keys stay ASCII so a file picked from a Thai-named folder still lands
 // on a path that survives a signed URL round trip. The extension is carried
@@ -114,6 +114,7 @@ type StorageApi = {
 export const submitLead = createServerFn({ method: "POST" })
   .validator(leadInput)
   .handler(async ({ data }): Promise<SubmitLeadResult> => {
+    try {
     // A filled honeypot gets the same success it would get from a real
     // submission — telling a bot it was caught only teaches it to adapt.
     if (data[HONEYPOT]) return { ok: true };
@@ -145,7 +146,16 @@ export const submitLead = createServerFn({ method: "POST" })
       .select("id")
       .single();
 
-    if (error) throw new Error(`Failed to save lead: ${error.message}`);
+    if (error) {
+      // Logged in full, reported as one word. A Postgres error names the table,
+      // the column and often the constraint it tripped — free schema for
+      // anyone prodding a public endpoint, and meaningless to the visitor, who
+      // only wanted to send a message. Thrown, it travelled to the browser
+      // verbatim: the form showed friendly text while the raw message sat in
+      // the response.
+      console.error("[lead] Insert failed", error);
+      return { ok: false, reason: "save_failed" };
+    }
 
     // The enquiry is already safe before the file is touched. If storage is
     // down or the bucket is missing, the lead still stands and the notification
@@ -188,4 +198,13 @@ export const submitLead = createServerFn({ method: "POST" })
     await notifyNewLead({ id: saved.id, ...lead, attachmentName, attachmentStored });
 
     return { ok: true, attachmentStored };
+    } catch (cause) {
+      // The backstop. Anything that throws in here — the Supabase client
+      // refusing to build, a column that isn't there, storage timing out —
+      // used to travel to the browser with its message attached, because a
+      // server function reports a thrown error to its caller. One word goes
+      // back instead, and the reason stays in the log.
+      console.error("[lead] Submission failed", cause);
+      return { ok: false, reason: "save_failed" };
+    }
   });

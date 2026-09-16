@@ -30,6 +30,16 @@ function toBase64(file: File): Promise<string> {
   });
 }
 
+// What the visitor is told, per reason the server gave. Nothing here repeats
+// what the server knows — a failed save says so and stops, because the detail
+// behind it is ours, not theirs.
+const REFUSALS: Partial<Record<string, string>> = {
+  file_too_large: "That file is over the 5 MB limit.",
+  file_type: "That kind of file isn't accepted. Try a PDF, an image or a document.",
+  too_fast: "That was quick — take a moment and submit again.",
+  save_failed: "Couldn't send that — please try again, or email me directly.",
+};
+
 export function LeadDialog({
   children,
   content = {},
@@ -97,13 +107,9 @@ export function LeadDialog({
       });
 
       if (!result.ok) {
-        setError(
-          result.reason === "file_too_large"
-            ? "That file is over the 5 MB limit."
-            : result.reason === "file_type"
-              ? "That kind of file isn't accepted. Try a PDF, an image or a document."
-              : "That was quick — take a moment and submit again.",
-        );
+        // A table rather than a ternary chain: the last branch used to be the
+        // catch-all, so a new reason silently inherited "that was quick".
+        setError(REFUSALS[result.reason] ?? REFUSALS["save_failed"]!);
         return;
       }
 

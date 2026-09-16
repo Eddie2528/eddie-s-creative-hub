@@ -400,6 +400,16 @@ handler sits in a catch that does the same for anything else that throws, so
 nothing internal can escape by a route nobody thought about. The reason goes to
 the log, where it is useful and unreachable.
 
+**The scan kept reporting it afterwards, and was ignored on 16 September.**
+Two deep rescans still quoted `'Failed to save lead: ...'`, a string that by
+then existed in neither the repo, nor Lovable's own copy of the file, nor the
+deployed bundle. The same rescan noticed the dependency fix in the same minute
+— 1 known issue to 0 — so it was reading the project; it simply doesn't
+re-verify a finding it has already raised. Every `throw` was taken out of that
+file anyway, including two in the attachment branch that a visitor could never
+have reached, on the chance the check is matching a pattern rather than a
+path. It wasn't enough. Don't spend a third round on it.
+
 **The marquee needs exactly two copies of the logo set.** The animation travels
 -50%; three copies land the loop mid-set and the strip visibly snaps.
 

@@ -115,99 +115,99 @@ export const submitLead = createServerFn({ method: "POST" })
   .validator(leadInput)
   .handler(async ({ data }): Promise<SubmitLeadResult> => {
     try {
-    // A filled honeypot gets the same success it would get from a real
-    // submission — telling a bot it was caught only teaches it to adapt.
-    if (data[HONEYPOT]) return { ok: true };
-    if (data.elapsedMs < MIN_FILL_MS) return { ok: false, reason: "too_fast" };
+      // A filled honeypot gets the same success it would get from a real
+      // submission — telling a bot it was caught only teaches it to adapt.
+      if (data[HONEYPOT]) return { ok: true };
+      if (data.elapsedMs < MIN_FILL_MS) return { ok: false, reason: "too_fast" };
 
-    let bytes: Uint8Array | null = null;
-    if (data.attachment) {
-      const allowed: readonly string[] = ALLOWED_ATTACHMENT_TYPES;
-      if (!allowed.includes(data.attachment.contentType)) {
-        return { ok: false, reason: "file_type" };
+      let bytes: Uint8Array | null = null;
+      if (data.attachment) {
+        const allowed: readonly string[] = ALLOWED_ATTACHMENT_TYPES;
+        if (!allowed.includes(data.attachment.contentType)) {
+          return { ok: false, reason: "file_type" };
+        }
+        bytes = decodeBase64(data.attachment.base64);
+        if (bytes.length > MAX_ATTACHMENT_BYTES) return { ok: false, reason: "file_too_large" };
       }
-      bytes = decodeBase64(data.attachment.base64);
-      if (bytes.length > MAX_ATTACHMENT_BYTES) return { ok: false, reason: "file_too_large" };
-    }
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const lead = {
-      name: data.name,
-      email: data.email,
-      phone: data.phone,
-      message: data.message || null,
-      source: data.source || null,
-    };
+      const lead = {
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        message: data.message || null,
+        source: data.source || null,
+      };
 
-    const { data: saved, error } = await supabaseAdmin
-      .from("leads")
-      .insert(lead)
-      .select("id")
-      .single();
+      const { data: saved, error } = await supabaseAdmin
+        .from("leads")
+        .insert(lead)
+        .select("id")
+        .single();
 
-    if (error) {
-      // Logged in full, reported as one word. A Postgres error names the table,
-      // the column and often the constraint it tripped — free schema for
-      // anyone prodding a public endpoint, and meaningless to the visitor, who
-      // only wanted to send a message. Thrown, it travelled to the browser
-      // verbatim: the form showed friendly text while the raw message sat in
-      // the response.
-      console.error("[lead] Insert failed", error);
-      return { ok: false, reason: "save_failed" };
-    }
+      if (error) {
+        // Logged in full, reported as one word. A Postgres error names the table,
+        // the column and often the constraint it tripped — free schema for
+        // anyone prodding a public endpoint, and meaningless to the visitor, who
+        // only wanted to send a message. Thrown, it travelled to the browser
+        // verbatim: the form showed friendly text while the raw message sat in
+        // the response.
+        console.error("[lead] Insert failed", error);
+        return { ok: false, reason: "save_failed" };
+      }
 
-    // The enquiry is already safe before the file is touched. If storage is
-    // down or the bucket is missing, the lead still stands and the notification
-    // says a file was attached but didn't make it — far better than refusing
-    // the whole submission and losing the enquiry with it.
-    let attachmentName: string | null = null;
-    let attachmentStored = false;
+      // The enquiry is already safe before the file is touched. If storage is
+      // down or the bucket is missing, the lead still stands and the notification
+      // says a file was attached but didn't make it — far better than refusing
+      // the whole submission and losing the enquiry with it.
+      let attachmentName: string | null = null;
+      let attachmentStored = false;
 
-    // Checked rather than thrown and caught. The outcome was the same — both
-    // ended in a console.error and a lead that stands — but a database message
-    // inside a `throw` in this file is the shape a scanner looks for when it
-    // asks whether a public endpoint leaks its internals, and being obviously
-    // right beats being right after someone traces the catch.
-    if (data.attachment && bytes) {
-      attachmentName = data.attachment.name;
-      const path = `${saved.id}/${safeName(data.attachment.name)}`;
+      // Checked rather than thrown and caught. The outcome was the same — both
+      // ended in a console.error and a lead that stands — but a database message
+      // inside a `throw` in this file is the shape a scanner looks for when it
+      // asks whether a public endpoint leaks its internals, and being obviously
+      // right beats being right after someone traces the catch.
+      if (data.attachment && bytes) {
+        attachmentName = data.attachment.name;
+        const path = `${saved.id}/${safeName(data.attachment.name)}`;
 
-      const { error: uploadError } = await (supabaseAdmin as unknown as StorageApi).storage
-        .from(LEAD_BUCKET)
-        .upload(path, bytes, { contentType: data.attachment.contentType, upsert: true });
+        const { error: uploadError } = await (supabaseAdmin as unknown as StorageApi).storage
+          .from(LEAD_BUCKET)
+          .upload(path, bytes, { contentType: data.attachment.contentType, upsert: true });
 
-      if (uploadError) {
-        console.error("[lead] Attachment upload failed; the lead itself was saved", uploadError);
-      } else {
-        const { error: linkError } = await (supabaseAdmin as unknown as LeadsWriter)
-          .from("leads")
-          .update({
-            attachment_path: path,
-            attachment_name: data.attachment.name,
-            attachment_size: bytes.length,
-            attachment_type: data.attachment.contentType,
-          })
-          .eq("id", saved.id);
-
-        if (linkError) {
-          // The file is in the bucket but the lead doesn't point at it. Eddie
-          // is told it didn't arrive, which is the safe half of the truth.
-          console.error("[lead] Attachment stored but not linked to the lead", linkError);
+        if (uploadError) {
+          console.error("[lead] Attachment upload failed; the lead itself was saved", uploadError);
         } else {
-          attachmentStored = true;
+          const { error: linkError } = await (supabaseAdmin as unknown as LeadsWriter)
+            .from("leads")
+            .update({
+              attachment_path: path,
+              attachment_name: data.attachment.name,
+              attachment_size: bytes.length,
+              attachment_type: data.attachment.contentType,
+            })
+            .eq("id", saved.id);
+
+          if (linkError) {
+            // The file is in the bucket but the lead doesn't point at it. Eddie
+            // is told it didn't arrive, which is the safe half of the truth.
+            console.error("[lead] Attachment stored but not linked to the lead", linkError);
+          } else {
+            attachmentStored = true;
+          }
         }
       }
-    }
 
-    // After the insert, and awaited so the notification isn't cut short when
-    // the serverless invocation ends. notifyNewLead swallows its own failures:
-    // the lead is saved either way, and asking a visitor to submit again
-    // because our mail provider is down would be the worse outcome.
-    const { notifyNewLead } = await import("./notify-lead");
-    await notifyNewLead({ id: saved.id, ...lead, attachmentName, attachmentStored });
+      // After the insert, and awaited so the notification isn't cut short when
+      // the serverless invocation ends. notifyNewLead swallows its own failures:
+      // the lead is saved either way, and asking a visitor to submit again
+      // because our mail provider is down would be the worse outcome.
+      const { notifyNewLead } = await import("./notify-lead");
+      await notifyNewLead({ id: saved.id, ...lead, attachmentName, attachmentStored });
 
-    return { ok: true, attachmentStored };
+      return { ok: true, attachmentStored };
     } catch (cause) {
       // The backstop. Anything that throws in here — the Supabase client
       // refusing to build, a column that isn't there, storage timing out —

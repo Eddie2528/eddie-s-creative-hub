@@ -86,6 +86,16 @@ begin
 end
 $fn$;
 
+-- Postgres grants EXECUTE on a new function to PUBLIC, and Supabase serves
+-- every function in this schema as an RPC endpoint — so without this, anyone
+-- with the publishable key could call a SECURITY DEFINER function as often as
+-- they liked. The retention rule caps what that costs at twelve rows, which is
+-- exactly the problem: twelve junk snapshots push out the twelve real ones.
+-- Only the cron job needs to run this, and it runs as the owner.
+revoke execute on function public.take_content_backup() from public;
+revoke execute on function public.take_content_backup() from anon;
+revoke execute on function public.take_content_backup() from authenticated;
+
 -- 03:00 UTC on the 1st — mid-morning in Bangkok, and nowhere near a deploy.
 select cron.unschedule('content-backup-monthly')
 where exists (select 1 from cron.job where jobname = 'content-backup-monthly');

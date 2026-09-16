@@ -42,6 +42,15 @@ Nothing is broken and nothing is half-finished. The test leads are gone, and
 both secrets that had been seen — the Telegram bot token and `ADMIN_PASSWORD` —
 were rotated on 9 September 2026.
 
+**A new function is executable by everyone until you say otherwise.** Postgres
+grants EXECUTE to PUBLIC on creation and Supabase publishes every function in
+`public` as an RPC endpoint, so `take_content_backup()` — SECURITY DEFINER, by
+necessity — was callable by anyone holding the publishable key for the few
+minutes between running 0011 and noticing. The retention rule capped the damage
+at twelve rows, which is the damage: twelve junk snapshots evict the twelve
+real ones. The revokes are in 0011 now. Check any new function with
+`has_function_privilege('anon', 'public.fn()', 'EXECUTE')` — it should be false.
+
 **The content has no backup but the one you take.** Every role, campaign,
 ordering, logo pick and line of copy lives in `site_content` and `site_works`
 and nowhere else; deleting the wrong thing in the back-office drops the site
@@ -50,10 +59,15 @@ is no undo and no snapshot. `supabase/export-content.sql` is the query that
 makes one: run it in the Cloud SQL editor, copy the single cell, save it as
 `backups/YYYY-MM-DD-content.sql` outside the repo — `backups/README.md` has the
 procedure and what restoring does. What comes out is `insert … on conflict do
-update`, so restoring overwrites the rows it names and never deletes. Monthly
-is enough, and reading costs no credits. The first one was taken on 13
-September 2026: `backups/2026-09-13-content.sql`, 47 content rows and 39
-works, checked byte-for-byte against what the database produced.
+update`, so restoring overwrites the rows it names and never deletes. Since 16 September the database takes its own on the 1st of each month —
+`pg_cron` calling `take_content_backup()`, keeping the last twelve in
+`content_backups` (migration 0011). That covers the likely accident: the newest
+snapshot is a copy-paste away from putting a bad delete back.
+
+It does not cover losing the database, because it lives in the database. The
+file under `backups/` does — `backups/2026-09-13-content.sql`, 47 content rows
+and 39 works, checked byte-for-byte against what the database produced. Once a
+year is plenty for that one now.
 
 **A domain of its own** is the one change left that would move the needle, and
 it is deliberately deferred rather than forgotten — note that Lovable puts Add

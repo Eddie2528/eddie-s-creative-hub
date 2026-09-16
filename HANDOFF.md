@@ -15,7 +15,10 @@ reaches Eddie on Telegram and by email within seconds, 27 pieces of work across
 `/admin/leads` edits every word, photo, document, campaign, role and logo.
 
 It is aimed at one reader: a recruiter who clicked a link from Eddie's CV or
-LinkedIn. That is why the hero carries an availability line, why the closing
+LinkedIn — though as of 16 September 2026 the CV carries no link at all, not
+even as text. Worth knowing before reading anything into where the traffic
+comes from: it can't be coming from the CV yet. Parked deliberately, not
+missed. That is why the hero carries an availability line, why the closing
 section offers an address to copy rather than only a form, why a visitor can
 attach a job description to the form, and why search ranking is not something
 this site is trying to win — nobody arrives here from a search.

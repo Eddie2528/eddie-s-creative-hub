@@ -48,14 +48,23 @@ function render(lead: LeadNotification) {
   const file = attachmentLine(lead);
   if (file) rows.push(["Attachment", file]);
 
+  // The back-office, not the home page: what this email is for is working the
+  // lead, and Telegram has carried that link since it was built.
+  const backOffice = `${SITE_URL}/admin/leads`;
+
   const text = [
     "New lead from your portfolio",
     "",
     ...rows.map(([label, value]) => `${label}: ${value}`),
     "",
-    SITE_URL,
+    `Open the back-office: ${backOffice}`,
   ].join("\n");
 
+  // An anchor styled as a button, not a real one: every mail client renders an
+  // anchor and half of them throw a <button> away. The colours are the site's
+  // own primary and its foreground, converted once from the oklch in
+  // styles.css. Nothing explanatory goes inside the markup — a comment in here
+  // is a comment that lands in Eddie's inbox.
   const html = `
     <div style="font-family:system-ui,-apple-system,'Segoe UI',sans-serif;max-width:520px">
       <h2 style="margin:0 0 16px;font-size:18px">New lead from your portfolio</h2>
@@ -70,8 +79,14 @@ function render(lead: LeadNotification) {
           )
           .join("")}
       </table>
-      <p style="margin:20px 0 0;font-size:13px;color:#666">
-        Reply to this email to answer ${escapeHtml(lead.name)} directly.
+      <p style="margin:24px 0 0">
+        <a href="${backOffice}"
+           style="display:inline-block;background:#FAA628;color:#150E06;text-decoration:none;font-weight:600;font-size:14px;line-height:1;padding:12px 20px;border-radius:6px">
+          Open the back-office
+        </a>
+      </p>
+      <p style="margin:16px 0 0;font-size:13px;color:#666">
+        Or reply to this email to answer ${escapeHtml(lead.name)} directly.
       </p>
     </div>`;
 

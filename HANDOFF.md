@@ -133,6 +133,10 @@ Two independent channels — Telegram and email — run together and are both
 best-effort: neither can fail a submission, and either one being unset says
 nothing about the other.
 
+Both carry a link straight to `/admin/leads` — the email's is a button, added
+on 16 September when it turned out only Telegram had one and the email ended
+with the home page instead.
+
 **Telegram** works without paying. Message `@BotFather`, send `/newbot`, and
 keep the token. Press Start in the new bot's own chat — Telegram won't let a bot
 message someone who hasn't — then read the chat id from `@userinfobot` or from

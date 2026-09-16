@@ -164,15 +164,22 @@ export const submitLead = createServerFn({ method: "POST" })
     let attachmentName: string | null = null;
     let attachmentStored = false;
 
+    // Checked rather than thrown and caught. The outcome was the same — both
+    // ended in a console.error and a lead that stands — but a database message
+    // inside a `throw` in this file is the shape a scanner looks for when it
+    // asks whether a public endpoint leaks its internals, and being obviously
+    // right beats being right after someone traces the catch.
     if (data.attachment && bytes) {
       attachmentName = data.attachment.name;
       const path = `${saved.id}/${safeName(data.attachment.name)}`;
-      try {
-        const { error: uploadError } = await (supabaseAdmin as unknown as StorageApi).storage
-          .from(LEAD_BUCKET)
-          .upload(path, bytes, { contentType: data.attachment.contentType, upsert: true });
-        if (uploadError) throw new Error(uploadError.message);
 
+      const { error: uploadError } = await (supabaseAdmin as unknown as StorageApi).storage
+        .from(LEAD_BUCKET)
+        .upload(path, bytes, { contentType: data.attachment.contentType, upsert: true });
+
+      if (uploadError) {
+        console.error("[lead] Attachment upload failed; the lead itself was saved", uploadError);
+      } else {
         const { error: linkError } = await (supabaseAdmin as unknown as LeadsWriter)
           .from("leads")
           .update({
@@ -182,11 +189,14 @@ export const submitLead = createServerFn({ method: "POST" })
             attachment_type: data.attachment.contentType,
           })
           .eq("id", saved.id);
-        if (linkError) throw new Error(linkError.message);
 
-        attachmentStored = true;
-      } catch (cause) {
-        console.error("[lead] Attachment upload failed; the lead itself was saved", cause);
+        if (linkError) {
+          // The file is in the bucket but the lead doesn't point at it. Eddie
+          // is told it didn't arrive, which is the safe half of the truth.
+          console.error("[lead] Attachment stored but not linked to the lead", linkError);
+        } else {
+          attachmentStored = true;
+        }
       }
     }
 

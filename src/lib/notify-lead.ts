@@ -29,6 +29,15 @@ function attachmentLine(lead: LeadNotification): string | null {
 // a verified domain and notifications start going out with no code change.
 const SENDER_DOMAIN = process.env["LEAD_NOTIFY_DOMAIN"];
 
+// Both chat channels cap a message — Telegram at 4096 characters, LINE at 5000
+// — and answer a longer one with a 400 rather than a shortened message. The
+// form accepts 5000 characters of enquiry, so a genuinely long one could
+// silently cost the notification. The lead is in the back-office either way;
+// what the chat needs to carry is enough to decide whether to go and read it.
+function clamp(value: string, limit: number): string {
+  return value.length <= limit ? value : `${value.slice(0, limit - 1)}…`;
+}
+
 function escapeHtml(value: string) {
   return value
     .replace(/&/g, "&amp;")
@@ -114,7 +123,7 @@ async function notifyByTelegram(lead: LeadNotification): Promise<void> {
     `<b>Phone</b>  ${escapeHtml(lead.phone)}`,
     ...(attachmentLine(lead) ? [`<b>Attachment</b>  ${escapeHtml(attachmentLine(lead) as string)}`] : []),
     "",
-    escapeHtml(lead.message || "(no message)"),
+    escapeHtml(clamp(lead.message || "(no message)", 3000)),
     "",
     `<a href="${SITE_URL}/admin/leads">Open the back-office</a>`,
   ].join("\n");
@@ -138,6 +147,61 @@ async function notifyByTelegram(lead: LeadNotification): Promise<void> {
     }
   } catch (cause) {
     console.error("[lead] Telegram notification failed; the lead itself was saved", cause);
+  }
+}
+
+// LINE's own Notify service — one token, one call, straight to your own chat —
+// was shut down on 31 March 2025. What replaces it is the Messaging API, which
+// sends from a LINE Official Account rather than from a person: Eddie adds the
+// account as a friend, and the push lands in his ordinary LINE chat list. The
+// free plan's monthly allowance is measured in hundreds of messages, against a
+// handful of leads.
+//
+// Push, deliberately, not broadcast. Broadcast reaches everyone who has added
+// the account, and would hand a stranger who happened to add it the name,
+// email and phone number of everyone who has ever used the form.
+async function notifyByLine(lead: LeadNotification): Promise<void> {
+  const token = process.env["LINE_CHANNEL_TOKEN"];
+  const userId = process.env["LINE_USER_ID"];
+  if (!token || !userId) {
+    console.info("[lead] LINE not configured; lead saved, no message sent");
+    return;
+  }
+
+  // Plain text: LINE has no markup in a text message, and makes the URL
+  // tappable on its own.
+  const text = clamp(
+    [
+      "New lead from your portfolio",
+      "",
+      `Name   ${lead.name}`,
+      `Email  ${lead.email}`,
+      `Phone  ${lead.phone}`,
+      ...(attachmentLine(lead) ? [`File   ${attachmentLine(lead) as string}`] : []),
+      "",
+      clamp(lead.message || "(no message)", 3000),
+      "",
+      `${SITE_URL}/admin/leads`,
+    ].join("\n"),
+    4900,
+  );
+
+  try {
+    const response = await fetch("https://api.line.me/v2/bot/message/push", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ to: userId, messages: [{ type: "text", text }] }),
+    });
+    if (!response.ok) {
+      // 401 is a bad or expired channel token; 400 usually means the user id
+      // isn't someone who has added the account as a friend.
+      console.error(`[lead] LINE refused the message (${response.status}): ${await response.text()}`);
+    }
+  } catch (cause) {
+    console.error("[lead] LINE notification failed; the lead itself was saved", cause);
   }
 }
 
@@ -235,5 +299,8 @@ async function notifyByEmail(lead: LeadNotification): Promise<void> {
 // independent — one being unconfigured says nothing about the other — so they
 // go together rather than in sequence.
 export async function notifyNewLead(lead: LeadNotification): Promise<void> {
-  await Promise.all([notifyByTelegram(lead), notifyByEmail(lead)]);
+  // Three channels, all best-effort and all independent: each swallows its own
+  // failure, none can fail a submission, and one being unconfigured says
+  // nothing about the others.
+  await Promise.all([notifyByTelegram(lead), notifyByEmail(lead), notifyByLine(lead)]);
 }

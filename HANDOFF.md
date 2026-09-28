@@ -147,13 +147,17 @@ says exactly which one is missing rather than drawing a screen of zeroes.
 
 ## Telling Eddie a lead arrived
 
-Two independent channels — Telegram and email — run together and are both
-best-effort: neither can fail a submission, and either one being unset says
-nothing about the other.
+Three independent channels — Telegram, email and LINE — run together and are
+all best-effort: none can fail a submission, and one being unset says nothing
+about the others. All three carry a link straight to `/admin/leads`.
 
-Both carry a link straight to `/admin/leads` — the email's is a button, added
-on 16 September when it turned out only Telegram had one and the email ended
-with the home page instead.
+Both chat channels clamp the enquiry: Telegram refuses a message over 4096
+characters and LINE over 5000, while the form accepts 5000 characters of
+message, so a long one would have cost the notification rather than shortening
+it.
+
+The email's link is a button, added on 16 September when it turned out only
+Telegram had one and the email ended with the home page instead.
 
 **Telegram** works without paying. Message `@BotFather`, send `/newbot`, and
 keep the token. Press Start in the new bot's own chat — Telegram won't let a bot
@@ -175,6 +179,21 @@ arrives twice:
   (403 `no_matching_sender`), which is why the code skips rather than tries.
 
 `LEAD_NOTIFY_TO` overrides the recipient for both.
+
+**LINE** needs a LINE Official Account, because LINE Notify — one token
+straight to your own chat — was shut down on 31 March 2025 and nothing
+replaced it for personal use. The Messaging API sends from an account rather
+than a person: create a Messaging API channel at developers.line.biz, take the
+long-lived **channel access token** from the Messaging API tab and **Your user
+ID** from Basic settings, add the account as a friend by scanning the QR there,
+and put the two into Secrets as `LINE_CHANNEL_TOKEN` and `LINE_USER_ID`. The
+message then arrives in Eddie's ordinary LINE chat list. The free plan allows
+a few hundred messages a month against a handful of leads, so it costs nothing.
+
+It pushes to one user id rather than broadcasting, and that is not a detail to
+simplify away: broadcast reaches everyone who has added the account, which
+would hand a stranger the name, email and phone number of everyone who has
+used the form.
 
 ## Migrations
 
@@ -208,6 +227,8 @@ a mechanism.
 | `LEAD_NOTIFY_TO` | overrides the notification recipient |
 | `TELEGRAM_BOT_TOKEN` | Telegram lead alerts — from @BotFather |
 | `TELEGRAM_CHAT_ID` | Telegram lead alerts — the chat to post into |
+| `LINE_CHANNEL_TOKEN` | LINE lead alerts — long-lived token from the Messaging API channel |
+| `LINE_USER_ID` | LINE lead alerts — "Your user ID" on the channel's Basic settings |
 
 Secrets apply to preview immediately and to the live site **only after a
 publish**.
@@ -435,6 +456,11 @@ path. It wasn't enough. Don't spend a third round on it.
 
 - **Never force-push, rebase or amend a pushed commit.** Lovable syncs this
   branch and rewriting history corrupts the project. Revert instead.
+- **The build needs Node 20 or newer** — rolldown imports `styleText` from
+  `node:util`, which Node 18 doesn't have, and the failure reads as a syntax
+  error in a file nobody wrote. On 29 September the Mac's default had drifted
+  back to 18 and `bun run build` died on it; `nvm use 24` fixed it on the spot,
+  `nvm alias default 24` fixes it for good. Lovable's own build is unaffected.
 - **Use `bun`.** `bunfig.toml` sets a 24h supply-chain guard on new package
   versions; `npm` would ignore the lockfile pinning.
 - **Never commit `.env`.** The repo is public.

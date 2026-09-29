@@ -200,11 +200,17 @@ preview"); pressing Add again worked. The site was fine — a cold worker took
 2.8s to answer and LinkedIn gave up. If it happens again, retry, or run the URL
 through linkedin.com/post-inspector first.
 
-**Unconfirmed: whether the Featured card keeps its tag.** The card displays
-`https://eddie-nakharin.lovable.app` with no tag, because it shows `og:url`,
-which is `SITE_URL`. Whether a click goes to the address that was typed or to
-`og:url` hasn't been checked. If the tag is dropped, those visits land in
-Social rather than `linkedin`.
+**LinkedIn's Featured card goes to `og:url`, not to the link you pasted.**
+Checked on 29 September: with `og:url` fixed at `SITE_URL`, a click on the card
+arrived with no tag, so it counted as Social. `og:url` now repeats the
+request's `utm_source` and `utm_campaign` (and nothing else — `fbclid` and the
+like are dropped), via `shareUrl` in `src/routes/index.tsx`. An untagged visit
+still gets the bare `SITE_URL`. A card added before the fix keeps the old
+address until it is removed and added again.
+
+The cost: Facebook now treats a tagged link as a page of its own, so likes and
+shares are counted per tag rather than together. On a site nobody likes or
+shares, that is nothing.
 
 ## Telling Eddie a lead arrived
 

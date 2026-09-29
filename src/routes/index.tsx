@@ -26,8 +26,27 @@ const DESCRIPTION =
 // because a scraper reads it away from the page.
 const SHARE_IMAGE = `${SITE_URL}/og/share-card.jpg`;
 
+// og:url carries the link's tag through. LinkedIn sends a click on a Featured
+// card to og:url, not to the address that was pasted, so a bare SITE_URL here
+// turned every ?utm_source=linkedin visit into an untagged Social one. Only the
+// two tags the Activity tab reads are kept — anything else a platform appends
+// (fbclid and friends) stays out of the address a scraper stores.
+const TAGS = ["utm_source", "utm_campaign"] as const;
+
+function shareUrl(search: Record<string, unknown>) {
+  const kept = new URLSearchParams();
+  for (const tag of TAGS) {
+    // The router JSON-parses search values, so ?utm_campaign=2026 arrives as a number.
+    const raw = search[tag];
+    const value = typeof raw === "number" ? String(raw) : raw;
+    if (typeof value === "string" && value && value.length <= 64) kept.set(tag, value);
+  }
+  const query = kept.toString();
+  return query ? `${SITE_URL}/?${query}` : SITE_URL;
+}
+
 export const Route = createFileRoute("/")({
-  head: ({ loaderData }) => {
+  head: ({ loaderData, match }) => {
     const title = loaderData?.content["meta.title"] ?? TITLE;
     const description = loaderData?.content["meta.description"] ?? DESCRIPTION;
     // Lovable appends its own og:image — a screenshot of whatever the site
@@ -43,7 +62,7 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: title },
       { property: "og:description", content: description },
       { property: "og:type", content: "profile" },
-      { property: "og:url", content: SITE_URL },
+      { property: "og:url", content: shareUrl(match.search as Record<string, unknown>) },
       { name: "twitter:card", content: "summary_large_image" },
       { property: "og:image", content: share },
       // Facebook lays out the card before the image arrives; without these it

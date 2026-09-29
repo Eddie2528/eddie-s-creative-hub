@@ -17,7 +17,7 @@ import { Track } from "@/components/site/Track";
 import eddieHero from "@/assets/eddie-hero.jpg";
 import eddieProfile from "@/assets/eddie-profile.jpg";
 
-const TITLE = "Eddie Nakharin — Brand, Communications & Business Development";
+const TITLE = "Eddie Nakharin — Brand / Marketing Communication Director";
 const DESCRIPTION =
   "18 years across advertising, branding, PR, events and business development. Portfolio, work experience and CV of Eddie Nakharin.";
 

@@ -4,7 +4,7 @@ Where the project stands and what to know before touching it. Read
 [PRD.md](PRD.md) first for what the site is and why it's built this way; this
 file is the state of play.
 
-Last updated: 16 September 2026.
+Last updated: 29 September 2026.
 
 ## Right now
 
@@ -38,18 +38,33 @@ first and the migrations second.
 
 ## Still to do
 
-Nothing is broken and nothing is half-finished. The test leads are gone, and
-both secrets that had been seen — the Telegram bot token and `ADMIN_PASSWORD` —
-were rotated on 9 September 2026.
+Nothing is broken. One thing is written and waiting on a token.
 
-**A new function is executable by everyone until you say otherwise.** Postgres
-grants EXECUTE to PUBLIC on creation and Supabase publishes every function in
-`public` as an RPC endpoint, so `take_content_backup()` — SECURITY DEFINER, by
-necessity — was callable by anyone holding the publishable key for the few
-minutes between running 0011 and noticing. The retention rule capped the damage
-at twelve rows, which is the damage: twelve junk snapshots evict the twelve
-real ones. The revokes are in 0011 now. Check any new function with
-`has_function_privilege('anon', 'public.fn()', 'EXECUTE')` — it should be false.
+**LINE, the third notification channel, is code-complete and unconfigured.**
+`notifyByLine` in `src/lib/notify-lead.ts` went in on 29 September and is on
+`main`; it has not been published, and it skips silently until its two secrets
+exist, so the site behaves exactly as before in the meantime. What is left is
+not code:
+
+1. At developers.line.biz, create a **Messaging API** channel (a LINE Official
+   Account — free plan, and a few hundred messages a month against a handful of
+   leads).
+2. Messaging API tab → issue a long-lived **channel access token**.
+3. Basic settings tab → copy **Your user ID** (starts with `U`).
+4. Scan the QR on the Messaging API tab to **add the account as a friend** on
+   the personal LINE. LINE refuses a push to someone who hasn't.
+5. Cloud → Secrets: `LINE_CHANNEL_TOKEN` and `LINE_USER_ID`.
+6. **Publish** — secrets reach the live site only on a publish.
+7. Submit the form once and check all three arrive. Then delete the test lead,
+   or mark it archived.
+
+If it doesn't arrive, the log says which: 401 is a bad or expired token, 400 is
+usually a user id that hasn't added the account. Nothing about a failed LINE
+send can cost a lead — the other two channels and the database don't know it
+happened.
+
+The test leads are gone, and both secrets that had been seen — the Telegram bot
+token and `ADMIN_PASSWORD` — were rotated on 9 September 2026.
 
 **The content has no backup but the one you take.** Every role, campaign,
 ordering, logo pick and line of copy lives in `site_content` and `site_works`
@@ -59,7 +74,9 @@ is no undo and no snapshot. `supabase/export-content.sql` is the query that
 makes one: run it in the Cloud SQL editor, copy the single cell, save it as
 `backups/YYYY-MM-DD-content.sql` outside the repo — `backups/README.md` has the
 procedure and what restoring does. What comes out is `insert … on conflict do
-update`, so restoring overwrites the rows it names and never deletes. Since 16 September the database takes its own on the 1st of each month —
+update`, so restoring overwrites the rows it names and never deletes.
+
+Since 16 September the database takes its own on the 1st of each month —
 `pg_cron` calling `take_content_backup()`, keeping the last twelve in
 `content_backups` (migration 0011). That covers the likely accident: the newest
 snapshot is a copy-paste away from putting a bad delete back.
@@ -71,8 +88,8 @@ year is plenty for that one now.
 
 **A domain of its own** is the one change left that would move the needle, and
 it is deliberately deferred rather than forgotten — note that Lovable puts Add
-domain behind Pro, so this one costs a plan, not just an afternoon: it would replace the
-`.lovable.app` link on the CV, it is what removes the "Edit with Lovable"
+domain behind Pro, so this one costs a plan, not just an afternoon. It would
+replace the `.lovable.app` link on the CV, it is what removes the "Edit with Lovable"
 badge, and verifying it in Resend would let the notification email come from
 Eddie rather than `onboarding@resend.dev`. Revisit it when the link starts
 going to people who matter.
@@ -448,6 +465,15 @@ re-verify a finding it has already raised. Every `throw` was taken out of that
 file anyway, including two in the attachment branch that a visitor could never
 have reached, on the chance the check is matching a pattern rather than a
 path. It wasn't enough. Don't spend a third round on it.
+
+**A new function is executable by everyone until you say otherwise.** Postgres
+grants EXECUTE to PUBLIC on creation and Supabase publishes every function in
+`public` as an RPC endpoint, so `take_content_backup()` — SECURITY DEFINER, by
+necessity — was callable by anyone holding the publishable key for the few
+minutes between running 0011 and noticing. The retention rule capped the damage
+at twelve rows, which is the damage: twelve junk snapshots evict the twelve
+real ones. The revokes are in 0011 now. Check any new function with
+`has_function_privilege('anon', 'public.fn()', 'EXECUTE')` — it should be false.
 
 **The marquee needs exactly two copies of the logo set.** The animation travels
 -50%; three copies land the loop mid-set and the strip visibly snaps.

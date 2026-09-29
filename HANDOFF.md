@@ -6,6 +6,11 @@ file is the state of play.
 
 Last updated: 29 September 2026.
 
+**Next session: switch on LINE.** The code is live and waiting; what's left is
+Eddie's LINE Developers account and two secrets — see "Still to do". Nothing
+else is in flight: `main` is fully published, and there are no uncommitted
+changes.
+
 ## Right now
 
 The site is live at https://eddie-nakharin.lovable.app and everything on it
@@ -39,11 +44,12 @@ first and the migrations second.
 
 Nothing is broken. One thing is written and waiting on a token.
 
-**LINE, the third notification channel, is code-complete and unconfigured.**
-`notifyByLine` in `src/lib/notify-lead.ts` went in on 29 September and is on
-`main`; it has not been published, and it skips silently until its two secrets
+**LINE, the third notification channel, is live and unconfigured.**
+`notifyByLine` in `src/lib/notify-lead.ts` went in on 29 September and went
+live with that day's later publishes. It skips silently until both secrets
 exist, so the site behaves exactly as before in the meantime. What is left is
-not code:
+not code, and steps 1–5 are Eddie's to do — they are his LINE account and his
+tokens, so an assistant walks him through them rather than doing them:
 
 1. At developers.line.biz, create a **Messaging API** channel (a LINE Official
    Account — free plan, and a few hundred messages a month against a handful of
@@ -61,6 +67,24 @@ If it doesn't arrive, the log says which: 401 is a bad or expired token, 400 is
 usually a user id that hasn't added the account. Nothing about a failed LINE
 send can cost a lead — the other two channels and the database don't know it
 happened.
+
+Worth knowing while testing: the user id wanted is the one on the **channel's**
+Basic settings page ("Your user ID"), not a LINE ID from the app's profile —
+those are different things, and the app one gets a 400. The token must be the
+long-lived one; a short-lived token works for a while and then 401s. Once LINE
+works, add a line saying so here and move the steps to "Telling Eddie a lead
+arrived".
+
+**The Activity tab counts bots, and they outnumber people.** Of 20 visits in
+the week to 29 September, about 15 were not people: pairs from NL plus ES, FR
+or GB, ~13s apart, landing minutes after each Publish (Lovable's own
+post-publish crawl, most likely), and three `linkedin` visits from the US
+within 43s, when the Featured card was added — LinkedIn rendering its preview.
+None of them scrolled or clicked. The people that week were four visits from
+Thailand. Suggested fix, not yet built: skip recording in
+`src/lib/site-events.ts` when `navigator.webdriver` is true or the user agent
+says Headless or bot, then delete the past rows once new ones stop appearing.
+Until then, read `linkedin`, `cv` and Direct with that in mind.
 
 **The share card's availability line is baked into an image.**
 `public/og/share-card.jpg` repeats the hero's availability line — redrawn on
@@ -206,7 +230,8 @@ arrived with no tag, so it counted as Social. `og:url` now repeats the
 request's `utm_source` and `utm_campaign` (and nothing else — `fbclid` and the
 like are dropped), via `shareUrl` in `src/routes/index.tsx`. An untagged visit
 still gets the bare `SITE_URL`. A card added before the fix keeps the old
-address until it is removed and added again.
+address until it is removed and added again — Eddie's was, on 29 September, and
+Post Inspector now reports the tagged address as canonical.
 
 The cost: Facebook now treats a tagged link as a page of its own, so likes and
 shares are counted per tag rather than together. On a site nobody likes or

@@ -45,6 +45,14 @@ function remember(sent: Set<string>) {
 
 export function Track() {
   useEffect(() => {
+    // Automated browsers say so here even when they dress their user agent up
+    // as an ordinary Chrome, which the server's check can't see through.
+    try {
+      if (navigator.webdriver) return;
+    } catch {
+      // Nothing to learn; count the visit.
+    }
+
     const visit = visitId();
     const sent = alreadySent();
 

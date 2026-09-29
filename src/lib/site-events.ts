@@ -91,6 +91,19 @@ function deviceFrom(agent: string): "mobile" | "tablet" | "desktop" {
   return "desktop";
 }
 
+// Crawlers that run the page's JavaScript reach this the same way a visitor
+// does. Before this check they were most of the Activity tab: pairs from NL
+// plus ES, FR or GB minutes after each Publish, and LinkedIn rendering its
+// preview. "bot" only counts with / ; ) or - after it, so a phone brand like
+// Cubot isn't mistaken for Googlebot. The agent is read here and thrown away,
+// as it is for the device.
+const ROBOT =
+  /bot[/;)-]|bot$|crawler|spider|slurp|headless|lighthouse|pagespeed|facebookexternalhit|embedly|puppeteer|playwright|phantomjs|selenium/i;
+
+function isRobot(agent: string): boolean {
+  return !agent || ROBOT.test(agent);
+}
+
 // Five buckets, worked out when the summary is read rather than when the row
 // is written, so changing what counts as social re-buckets everything already
 // recorded instead of only what comes next.
@@ -163,6 +176,10 @@ export const recordEvent = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }): Promise<{ ok: true }> => {
     try {
+      const { getRequestHeader } = await import("@tanstack/react-start/server");
+      const agent = getRequestHeader("user-agent") ?? "";
+      if (isRobot(agent)) return { ok: true };
+
       // Eddie opening his own site shouldn't show up as interest in it. The
       // session cookie is httpOnly, so only the server can tell — which is
       // also why the page can't skip the call itself.
@@ -178,8 +195,6 @@ export const recordEvent = createServerFn({ method: "POST" })
       // Only the visit row carries the context. The other four are the same
       // visit, so repeating it would be four copies of one fact.
       if (data.name === "visit") {
-        const { getRequestHeader } = await import("@tanstack/react-start/server");
-        const agent = getRequestHeader("user-agent") ?? "";
         const country = (getRequestHeader("cf-ipcountry") ?? "").toUpperCase();
 
         // A tag beats a referrer: Eddie put it there on purpose, and the links

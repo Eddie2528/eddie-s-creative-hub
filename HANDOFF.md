@@ -49,10 +49,17 @@ or GB, ~13s apart, landing minutes after each Publish (Lovable's own
 post-publish crawl, most likely), and three `linkedin` visits from the US
 within 43s, when the Featured card was added — LinkedIn rendering its preview.
 None of them scrolled or clicked. The people that week were four visits from
-Thailand. Suggested fix, not yet built: skip recording in
-`src/lib/site-events.ts` when `navigator.webdriver` is true or the user agent
-says Headless or bot, then delete the past rows once new ones stop appearing.
-Until then, read `linkedin`, `cv` and Direct with that in mind.
+Thailand.
+
+Since 29 September the page skips counting when `navigator.webdriver` is true
+(`Track.tsx`), and the server skips any request whose user agent is empty or
+reads as a crawler — Headless, `…bot/`, LinkedInBot, facebookexternalhit and
+the like (`ROBOT` in `src/lib/site-events.ts`). Whether that catches all of
+them is not yet known: the agent was never stored, so nothing says what the
+NL pairs called themselves. **Check after the next few Publishes** — a new
+desktop, Direct, NL-plus-another-country pair with nothing but a `visit` row
+means one got through, and the next step is to log its agent once and add it.
+The old rows are still in the table until someone deletes them.
 
 **The share card's availability line is baked into an image.**
 `public/og/share-card.jpg` repeats the hero's availability line — redrawn on

@@ -15,10 +15,9 @@ reaches Eddie on Telegram and by email within seconds, 27 pieces of work across
 `/admin/leads` edits every word, photo, document, campaign, role and logo.
 
 It is aimed at one reader: a recruiter who clicked a link from Eddie's CV or
-LinkedIn — though as of 16 September 2026 the CV carries no link at all, not
-even as text. Worth knowing before reading anything into where the traffic
-comes from: it can't be coming from the CV yet. Parked deliberately, not
-missed. That is why the hero carries an availability line, why the closing
+LinkedIn. Since 29 September 2026 both carry a tagged link, so that traffic
+arrives in the Activity tab under its own name rather than as Direct — see
+"Where the links are". That is why the hero carries an availability line, why the closing
 section offers an address to copy rather than only a form, why a visitor can
 attach a job description to the form, and why search ranking is not something
 this site is trying to win — nobody arrives here from a search.
@@ -62,6 +61,13 @@ If it doesn't arrive, the log says which: 401 is a bad or expired token, 400 is
 usually a user id that hasn't added the account. Nothing about a failed LINE
 send can cost a lead — the other two channels and the database don't know it
 happened.
+
+**The share card's availability line is baked into an image.**
+`public/og/share-card.jpg` says "Open to Brand / Marketing Communication area
+or Related", drawn once from the hero's copy. Editing the availability line in
+Content → Hero changes the page, not the card — the card has to be redrawn at
+1200×630 (see the og:image trap below) and republished, then scraped again on
+Facebook and LinkedIn.
 
 The test leads are gone, and both secrets that had been seen — the Telegram bot
 token and `ADMIN_PASSWORD` — were rotated on 9 September 2026.
@@ -162,6 +168,43 @@ channel Eddie had named himself.
 editor the page sends and the table isn't there to receive; the Activity tab
 says exactly which one is missing rather than drawing a screen of zeroes.
 
+## Where the links are
+
+Every link Eddie controls carries a tag, so each one reads as its own row in
+the Activity tab. Tested on 29 September 2026: a click from the CV arrived as
+`cv`.
+
+| Where | Address |
+| --- | --- |
+| The CV (PDF), contact line | `/?utm_source=cv` |
+| LinkedIn — Contact info → Website | `/?utm_source=linkedin` |
+| LinkedIn — Featured card | `/?utm_source=linkedin` |
+| LinkedIn — last line of About | `/?utm_source=linkedin` |
+
+**The CV's link is added after export, not in PowerPoint.** PowerPoint on the
+Mac makes its PDF through Quartz, which drops every hyperlink — the text
+`eddie-nakharin.lovable.app` was on the CV all along and could not be clicked.
+The link (and a `mailto:` on the email) were laid over the existing text with
+PyMuPDF, and the page renders pixel-identical to the export. Re-export the CV
+and the links are gone again; they have to be added once more. A CV tailored to
+one application can add `&utm_campaign=<company>` to say which one was opened.
+
+**The filename is what a recruiter saves.** The CV button's `download`
+attribute is ignored because the file lives on the Supabase storage domain, so
+the browser keeps the uploaded name. Upload it as `CV-Eddie_Nakharin_2026.pdf`,
+not a working name.
+
+**LinkedIn once refused to preview the tagged link** ("We couldn't generate a
+preview"); pressing Add again worked. The site was fine — a cold worker took
+2.8s to answer and LinkedIn gave up. If it happens again, retry, or run the URL
+through linkedin.com/post-inspector first.
+
+**Unconfirmed: whether the Featured card keeps its tag.** The card displays
+`https://eddie-nakharin.lovable.app` with no tag, because it shows `og:url`,
+which is `SITE_URL`. Whether a click goes to the address that was typed or to
+`og:url` hasn't been checked. If the tag is dropped, those visits land in
+Social rather than `linkedin`.
+
 ## Telling Eddie a lead arrived
 
 Three independent channels — Telegram, email and LINE — run together and are
@@ -230,8 +273,11 @@ a mechanism.
 | `0008_site_events.sql` | `site_events` — what visitors do, for the Activity tab |
 | `0009_event_context.sql` | source, device and country on the visit row |
 | `0010_event_campaign.sql` | `campaign`, for links tagged with `?utm_campaign=` |
+| `0011_content_backup_cron.sql` | `content_backups`, and the monthly `pg_cron` job calling `take_content_backup()` |
 
 `20260906043550_*.sql` is Lovable's own copy of 0001, written when it applied it.
+The four `20260915*_*.sql` files are Lovable's, from the storage-policy fix run
+through its chat on 15 September.
 
 ## Secrets
 
@@ -293,6 +339,9 @@ grouping, ordering and per-piece file overrides.
 **Files** — the `site-assets` bucket. Search by name, filter to Images, Video
 or Documents, and sort by name, date or size; the count reads "12 of 74" while
 a filter is on so a short list is never mistaken for a lost upload.
+
+**Activity** — what visitors did, over 7 or 30 days: the five-step funnel, and
+visits by channel, source, device and country. See "Who turns up".
 
 ## Attachments on the contact form
 
@@ -385,7 +434,7 @@ render at all: 4.4s to first byte cold, 0.9–1.5s warm. `Promise.all` fixed the
 waiting; it didn't fix that five of the six were separate `select`s of the same
 `site_content` table — copy, photos, the CV, roles, logos — which is five
 chances for one to come back empty while the rest succeed. That is what put a
-stranger's photo on the page (above). `getPageData` in `src/lib/page-data.ts`
+stranger's photo on the page (below). `getPageData` in `src/lib/page-data.ts`
 now shapes all five from one read, so they arrive together or fall back
 together, and the page can no longer be half true. Anything else the page needs
 out of `site_content` belongs in that function, not in a read of its own — the
@@ -513,7 +562,7 @@ src/lib/
   admin-leads.ts      read leads, set status, delete, sign an attachment link
   submit-lead.ts      the contact form, the attachment, and the limits on it
   site-events.ts      the five things counted, and the funnel the Activity tab draws
-  notify-lead.ts      Telegram and email, one of each per lead
+  notify-lead.ts      Telegram, email and LINE, one of each per lead
 
 src/components/site/   what a visitor sees (Track.tsx counts, renders nothing)
 src/components/admin/  one editor per tab

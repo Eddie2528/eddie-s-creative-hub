@@ -59,7 +59,15 @@ them is not yet known: the agent was never stored, so nothing says what the
 NL pairs called themselves. **Check after the next few Publishes** — a new
 desktop, Direct, NL-plus-another-country pair with nothing but a `visit` row
 means one got through, and the next step is to log its agent once and add it.
-The old rows are still in the table until someone deletes them.
+The first Publish after the fix (~13:18 UTC on 29 September) brought no pair,
+where every Publish before it had — one data point, not yet a verdict.
+
+The 42 old bot rows were deleted the same day in the SQL editor: every
+desktop `visit` from NL, SE, ES, FR, GB or US with source Direct, `linkedin`
+or `facebook.com` and no other event, 14–29 September. None were from
+Thailand. Left alone: five rows from 13 September recorded before 0009, which
+carry no country to judge by, and the `lovable.dev` visits, which are Eddie
+opening the site from the editor.
 
 **The share card's availability line is baked into an image.**
 `public/og/share-card.jpg` repeats the hero's availability line — redrawn on

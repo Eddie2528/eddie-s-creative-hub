@@ -6,16 +6,15 @@ file is the state of play.
 
 Last updated: 29 September 2026.
 
-**Next session: switch on LINE.** The code is live and waiting; what's left is
-Eddie's LINE Developers account and two secrets — see "Still to do". Nothing
-else is in flight: `main` is fully published, and there are no uncommitted
-changes.
+**LINE is on.** The third notification channel went live on 29 September
+2026 — a test lead reached Telegram, email and LINE together. Nothing is in
+flight: `main` is fully published, and there are no uncommitted changes.
 
 ## Right now
 
 The site is live at https://eddie-nakharin.lovable.app and everything on it
 works: the contact form saves leads and takes an attachment, a new enquiry
-reaches Eddie on Telegram and by email within seconds, 27 pieces of work across
+reaches Eddie on Telegram, LINE and by email within seconds, 27 pieces of work across
 8 campaigns display and play, the CV downloads, and the back-office at
 `/admin/leads` edits every word, photo, document, campaign, role and logo.
 
@@ -42,38 +41,7 @@ first and the migrations second.
 
 ## Still to do
 
-Nothing is broken. One thing is written and waiting on a token.
-
-**LINE, the third notification channel, is live and unconfigured.**
-`notifyByLine` in `src/lib/notify-lead.ts` went in on 29 September and went
-live with that day's later publishes. It skips silently until both secrets
-exist, so the site behaves exactly as before in the meantime. What is left is
-not code, and steps 1–5 are Eddie's to do — they are his LINE account and his
-tokens, so an assistant walks him through them rather than doing them:
-
-1. At developers.line.biz, create a **Messaging API** channel (a LINE Official
-   Account — free plan, and a few hundred messages a month against a handful of
-   leads).
-2. Messaging API tab → issue a long-lived **channel access token**.
-3. Basic settings tab → copy **Your user ID** (starts with `U`).
-4. Scan the QR on the Messaging API tab to **add the account as a friend** on
-   the personal LINE. LINE refuses a push to someone who hasn't.
-5. Cloud → Secrets: `LINE_CHANNEL_TOKEN` and `LINE_USER_ID`.
-6. **Publish** — secrets reach the live site only on a publish.
-7. Submit the form once and check all three arrive. Then delete the test lead,
-   or mark it archived.
-
-If it doesn't arrive, the log says which: 401 is a bad or expired token, 400 is
-usually a user id that hasn't added the account. Nothing about a failed LINE
-send can cost a lead — the other two channels and the database don't know it
-happened.
-
-Worth knowing while testing: the user id wanted is the one on the **channel's**
-Basic settings page ("Your user ID"), not a LINE ID from the app's profile —
-those are different things, and the app one gets a 400. The token must be the
-long-lived one; a short-lived token works for a while and then 401s. Once LINE
-works, add a line saying so here and move the steps to "Telling Eddie a lead
-arrived".
+Nothing is broken, and nothing is waiting on a token.
 
 **The Activity tab counts bots, and they outnumber people.** Of 20 visits in
 the week to 29 September, about 15 were not people: pairs from NL plus ES, FR
@@ -275,12 +243,40 @@ arrives twice:
 **LINE** needs a LINE Official Account, because LINE Notify — one token
 straight to your own chat — was shut down on 31 March 2025 and nothing
 replaced it for personal use. The Messaging API sends from an account rather
-than a person: create a Messaging API channel at developers.line.biz, take the
-long-lived **channel access token** from the Messaging API tab and **Your user
-ID** from Basic settings, add the account as a friend by scanning the QR there,
-and put the two into Secrets as `LINE_CHANNEL_TOKEN` and `LINE_USER_ID`. The
-message then arrives in Eddie's ordinary LINE chat list. The free plan allows
-a few hundred messages a month against a handful of leads, so it costs nothing.
+than a person. Working since 29 September 2026: the account is **Eddie Lead
+Alert** (`@334nklkm`, free plan, 300 messages a month), under the provider
+**Eddie Portfolio**, and pushes land in the chat of the LINE account named
+"Job Lead" — the one logged in to the console, whose user id this is.
+
+To set it up again from nothing:
+
+1. The Developers Console no longer creates Messaging API channels. Create a
+   LINE Official Account at entry.line.biz, then in manager.line.biz →
+   Settings → Messaging API → **Enable**, and pick the provider.
+2. Developers Console → the channel → Messaging API tab → issue a long-lived
+   **channel access token**.
+3. Basic settings tab → copy **Your user ID** (starts with `U`, 33 characters).
+   Not the channel id, not the `@` basic id, not a LINE ID from the app.
+4. Scan the QR on the Messaging API tab to **add the account as a friend**.
+   LINE refuses a push to someone who hasn't.
+5. Cloud → Secrets: `LINE_CHANNEL_TOKEN` and `LINE_USER_ID`, then **Publish**.
+
+The Webhook URL stays empty — nothing is received, only sent.
+
+**How it went wrong the first time, so it needn't again.** The user id was
+pasted into the secret's *Name* box, so the list showed a secret called
+`U6934…` and no `LINE_USER_ID`, and the log said `LINE not configured` while
+Telegram and email arrived. Read the Secrets list for the two exact names
+before anything else. And a secret added after the running build was not seen
+by the preview either, whatever the Secrets page says about preview being
+immediate — a fresh Publish is what made it arrive.
+
+To test credentials without the site, send a push straight from a terminal
+(`POST https://api.line.me/v2/bot/message/push` with the token as Bearer and
+`{"to": "<user id>", "messages": [{"type": "text", "text": "test"}]}`). A 200
+there and `not configured` in the log means the site hasn't got the secrets;
+a 401 or 400 means the values are wrong. The log says which: 401 is a bad or
+expired token, 400 is usually a user id that hasn't added the account.
 
 It pushes to one user id rather than broadcasting, and that is not a detail to
 simplify away: broadcast reaches everyone who has added the account, which

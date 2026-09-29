@@ -63,11 +63,12 @@ send can cost a lead — the other two channels and the database don't know it
 happened.
 
 **The share card's availability line is baked into an image.**
-`public/og/share-card.jpg` says "Open to Brand / Marketing Communication area
-or Related", drawn once from the hero's copy. Editing the availability line in
-Content → Hero changes the page, not the card — the card has to be redrawn at
-1200×630 (see the og:image trap below) and republished, then scraped again on
-Facebook and LinkedIn.
+`public/og/share-card.jpg` repeats the hero's availability line — redrawn on
+29 September to read "Open to Brand / Marketing Communication Director or
+Related area." Editing that line in Content → Hero changes the page, not the
+card. To follow it: change the pill in `scripts/share-card/card.html`, run
+`scripts/share-card/render.sh`, commit the jpg, publish, then Scrape Again on
+Facebook's debugger and Inspect on linkedin.com/post-inspector.
 
 The test leads are gone, and both secrets that had been seen — the Telegram bot
 token and `ADMIN_PASSWORD` — were rotated on 9 September 2026.

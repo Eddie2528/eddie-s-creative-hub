@@ -1,0 +1,120 @@
+<!doctype html>
+<!--
+  The link-preview card, public/og/share-card.jpg. Rendered at 1200×630 by
+  render.sh — edit the text here, run it, commit the jpg, publish.
+  The pill repeats the hero's availability line (Content → Hero); when that
+  changes, this has to change with it, because the card is a picture.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500&display=swap" />
+<style>
+  :root {
+    --background: oklch(0.15 0.008 70);
+    --foreground: oklch(0.96 0.008 85);
+    --primary: oklch(0.79 0.16 71);
+    --muted-foreground: oklch(0.72 0.012 80);
+  }
+  * { margin: 0; box-sizing: border-box; }
+  html, body { width: 1200px; height: 630px; overflow: hidden; }
+  body {
+    position: relative;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: Inter, sans-serif;
+  }
+  .photo {
+    position: absolute;
+    left: 638px;
+    top: -41px;
+    width: 629px;
+  }
+  /* The photo dissolves into the background rather than meeting it at an edge. */
+  .fade {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to right,
+      var(--background) 0,
+      var(--background) 730px,
+      color-mix(in oklab, var(--background) 60%, transparent) 785px,
+      transparent 880px
+    );
+  }
+  /* The site's grain utility, at the same density. */
+  .grain {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(
+      circle at 1px 1px,
+      color-mix(in oklab, var(--foreground) 10%, transparent) 1px,
+      transparent 0
+    );
+    background-size: 4px 4px;
+    opacity: 0.25;
+  }
+  .copy { position: absolute; left: 72px; top: 0; }
+  .name {
+    position: absolute;
+    top: 62px;
+    font-family: Anton, sans-serif;
+    font-size: 24px;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+  }
+  .name span { color: var(--primary); }
+  h1 {
+    position: absolute;
+    top: 150px;
+    font-family: Anton, sans-serif;
+    font-weight: 400;
+    font-size: 88px;
+    line-height: 0.93;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  h1 em { font-style: normal; color: var(--primary); }
+  .pill {
+    position: absolute;
+    top: 438px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 20px;
+    border: 1px solid color-mix(in oklab, var(--primary) 45%, transparent);
+    border-radius: 999px;
+    background: color-mix(in oklab, var(--primary) 8%, transparent);
+    font-size: 17px;
+    white-space: nowrap;
+  }
+  .pill::before {
+    content: "";
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--primary);
+  }
+  .hairline {
+    position: absolute;
+    top: 555px;
+    font-size: 13px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--muted-foreground);
+    white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+  <img class="photo" src="../../src/assets/eddie-hero.jpg" alt="" />
+  <div class="fade"></div>
+  <div class="grain"></div>
+  <div class="copy">
+    <div class="name">EDDIE NAKHARIN<span>.</span></div>
+    <h1>Creative mind,<br /><em>Business</em><br />instinct.</h1>
+    <div class="pill">Open to Brand / Marketing Communication Director or Related area.</div>
+    <div class="hairline">18 years — Advertising · Branding · PR · Events · BD</div>
+  </div>
+</body>
+</html>
